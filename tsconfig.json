@@ -1,0 +1,25 @@
+{
+  "include": ["./src/**/*.ts"],
+  "exclude": ["./src/**/*.test.ts"],
+  "compilerOptions": {
+    "outDir": "dist",
+    "lib": ["es2022"],
+    "module": "commonjs",
+    "target": "es2022",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+    "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedParameters": true,
+    "importsNotUsedAsValues": "error"
+  }
+}
