@@ -1,5 +1,11 @@
+import { parse as babelParse } from "@babel/parser";
 import {
+  addComment,
+  arrowFunctionExpression,
+  blockStatement,
   booleanLiteral,
+  Expression,
+  expressionStatement,
   identifier,
   jsxAttribute,
   jsxExpressionContainer,
@@ -9,6 +15,8 @@ import {
   ObjectProperty,
   objectProperty,
   stringLiteral,
+  templateElement,
+  templateLiteral,
 } from "@babel/types";
 import parse from "style-to-object";
 
@@ -17,15 +25,55 @@ import type { Attribute } from "parse5/dist/common/token";
 export function convertAttributes(attributes: Attribute[]) {
   return attributes.map(({ name, value }) => {
     if (name === "style") {
-      return jsxAttribute(
-        jsxIdentifier("style"),
-        jsxExpressionContainer(convertStyleString(value))
-      );
+      return createJSXAttribute("style", convertStyleString(value));
     }
 
     for (const [originalName, renamed] of renamedAttributes) {
       if (originalName === name) {
-        return jsxAttribute(jsxIdentifier(renamed), stringLiteral(value));
+        return createJSXAttribute(renamed, value);
+      }
+    }
+
+    for (const attribute of eventAttributes) {
+      if (name === attribute.toLowerCase()) {
+        const functionCallMatch = value.match(EMPTY_FUNCTION_CALL);
+
+        if (functionCallMatch !== null) {
+          return createJSXAttribute(
+            attribute,
+            identifier(functionCallMatch[1]!)
+          );
+        }
+
+        try {
+          const innerCode = babelParse(value);
+
+          return createJSXAttribute(
+            attribute,
+            arrowFunctionExpression(
+              [identifier("event")],
+              blockStatement(innerCode.program.body)
+            )
+          );
+        } catch {
+          const codeTemplateLiteral = expressionStatement(
+            templateLiteral([templateElement({ raw: value })], [])
+          );
+          addComment(
+            codeTemplateLiteral,
+            "leading",
+            " TODO: Fix event handler code",
+            true
+          );
+
+          return createJSXAttribute(
+            attribute,
+            arrowFunctionExpression(
+              [identifier("event")],
+              blockStatement([codeTemplateLiteral])
+            )
+          );
+        }
       }
     }
 
@@ -56,36 +104,36 @@ export function convertAttributes(attributes: Attribute[]) {
         const numberValue = Number(value);
 
         if (Number.isFinite(numberValue)) {
-          return jsxAttribute(
-            jsxIdentifier(attribute),
-            jsxExpressionContainer(numericLiteral(Number(value)))
-          );
+          return createJSXAttribute(attribute, numberValue);
         } else {
-          return jsxAttribute(jsxIdentifier(attribute), stringLiteral(value));
+          return createJSXAttribute(attribute, value);
         }
       }
     }
 
     for (const [attribute, isNumeric] of svgCamelizedAttributes) {
       if (name === attribute) {
-        const camelizedName = name.replace(CAMELIZE, capitalize);
+        const camelizedName = kebabToCamel(name);
 
         if (isNumeric) {
           const numberValue = Number(value);
 
           if (Number.isFinite(numberValue)) {
-            return jsxAttribute(
-              jsxIdentifier(camelizedName),
-              jsxExpressionContainer(numericLiteral(Number(value)))
-            );
+            return createJSXAttribute(camelizedName, numberValue);
           }
         }
 
-        return jsxAttribute(jsxIdentifier(camelizedName), stringLiteral(value));
+        return createJSXAttribute(camelizedName, value);
       }
     }
 
-    return jsxAttribute(jsxIdentifier(name), stringLiteral(value));
+    for (const attribute of lowercasedAttributes) {
+      if (name === attribute.toLowerCase()) {
+        return createJSXAttribute(attribute, value);
+      }
+    }
+
+    return createJSXAttribute(name, value);
   });
 }
 
@@ -112,6 +160,61 @@ function convertStyleString(style: string) {
   });
 
   return objectExpression(properties);
+}
+
+const CAMELIZE = /[\-\:]([a-z])/g;
+const capitalize = (token: string) => token[1]!.toUpperCase();
+
+function kebabToCamel(string: string) {
+  return string.replace(CAMELIZE, capitalize);
+}
+
+// Matches function calls in an event handler attribute, e.g.
+// onclick="myFunction()".
+const EMPTY_FUNCTION_CALL = /^\s*([\p{L}_\$][\p{L}_\$]*)\(\)\s*$/u;
+
+/**
+ * @param trueLiterals A list of values that should preserve the
+ *   jsxExpressionContainer when true, e.g. checked={true} insted of just
+ *   checked.
+ */
+function coerceBooleanizeAttribute(
+  name: string,
+  value: string,
+  trueLiterals?: string[]
+) {
+  if (value === "" || value === "true" || value === name.toLowerCase()) {
+    if (trueLiterals?.includes(name)) {
+      return createJSXAttribute(name, booleanLiteral(true));
+    }
+
+    return createJSXAttribute(name, null);
+  } else if (value === "false") {
+    return createJSXAttribute(name, booleanLiteral(false));
+  }
+
+  return createJSXAttribute(name, value);
+}
+
+function createJSXAttribute(
+  name: string,
+  value: string | number | Expression | null
+) {
+  if (value === null) {
+    return jsxAttribute(jsxIdentifier(name), null);
+  }
+
+  switch (typeof value) {
+    case "string":
+      return jsxAttribute(jsxIdentifier(name), stringLiteral(value));
+    case "number":
+      return jsxAttribute(
+        jsxIdentifier(name),
+        jsxExpressionContainer(numericLiteral(value))
+      );
+    default:
+      return jsxAttribute(jsxIdentifier(name), jsxExpressionContainer(value));
+  }
 }
 
 // The following element listings are taken from the facebook/react repository.
@@ -158,6 +261,7 @@ const booleanAttributes = [
   "async",
   "autoFocus",
   "autoPlay",
+  "checked",
   "controls",
   "default",
   "defer",
@@ -166,7 +270,10 @@ const booleanAttributes = [
   "disableRemotePlayback",
   "formNoValidate",
   "hidden",
+  "itemScope",
   "loop",
+  "multiple",
+  "muted",
   "noModule",
   "noValidate",
   "open",
@@ -176,26 +283,25 @@ const booleanAttributes = [
   "reversed",
   "scoped",
   "seamless",
-  "itemScope",
-  "checked",
-  "multiple",
-  "muted",
   "selected",
 ];
 
 // These are HTML attributes that must be positive numbers.
 const numberAttributes = [
+  "cellPadding",
+  "cellSpacing",
   "cols",
+  "marginHeight",
+  "marginWidth",
+  "maxLength",
+  "minLength",
   "rows",
+  "rowSpan",
   "size",
   "span",
-  "rowSpan",
   "start",
   "tabIndex",
 ];
-
-const CAMELIZE = /[\-\:]([a-z])/g;
-const capitalize = (token: string) => token[1]!.toUpperCase();
 
 // These properties are SVG and have to be camelized.
 // The second value in the array determines should be converted to a number if
@@ -208,8 +314,8 @@ const svgCamelizedAttributes = [
   ["cap-height", true],
   ["clip-path", false],
   ["clip-rule", false],
-  ["color-interpolation", false],
   ["color-interpolation-filters", false],
+  ["color-interpolation", false],
   ["color-profile", false],
   ["color-rendering", false],
   ["dominant-baseline", false],
@@ -219,8 +325,8 @@ const svgCamelizedAttributes = [
   ["flood-color", false],
   ["flood-opacity", false],
   ["font-family", false],
-  ["font-size", true],
   ["font-size-adjust", true],
+  ["font-size", true],
   ["font-stretch", false],
   ["font-style", false],
   ["font-variant", false],
@@ -272,42 +378,122 @@ const svgCamelizedAttributes = [
   ["vert-origin-y", true],
   ["word-spacing", true],
   ["writing-mode", false],
-  ["xmlns:xlink", false],
   ["x-height", true],
+  ["xmlns:xlink", false],
 ];
 
-const lowercasedAttributes = ["crossOrigin", "formAction"];
+// Supported event attributes in React, taken from
+// https://reactjs.org/docs/events.html
+const eventAttributes = [
+  "onAbort",
+  "onAnimationEnd",
+  "onAnimationIteration",
+  "onAnimationStart",
+  "onBlur",
+  "onCanPlay",
+  "onCanPlayThrough",
+  "onChange",
+  "onClick",
+  "onCompositionEnd",
+  "onCompositionStart",
+  "onCompositionUpdate",
+  "onContextMenu",
+  "onCopy",
+  "onCut",
+  "onDoubleClick",
+  "onDrag",
+  "onDragEnd",
+  "onDragEnter",
+  "onDragExit",
+  "onDragLeave",
+  "onDragOver",
+  "onDragStart",
+  "onDrop",
+  "onDurationChange",
+  "onEmptied",
+  "onEncrypted",
+  "onEnded",
+  "onError",
+  "onError",
+  "onFocus",
+  "onGotPointerCapture",
+  "onInput",
+  "onInvalid",
+  "onKeyDown",
+  "onKeyPress",
+  "onKeyUp",
+  "onLoad",
+  "onLoadedData",
+  "onLoadedMetadata",
+  "onLoadStart",
+  "onLostPointerCapture",
+  "onMouseDown",
+  "onMouseEnter",
+  "onMouseLeave",
+  "onMouseMove",
+  "onMouseOut",
+  "onMouseOver",
+  "onMouseUp",
+  "onPaste",
+  "onPause",
+  "onPlay",
+  "onPlaying",
+  "onPointerCancel",
+  "onPointerDown",
+  "onPointerEnter",
+  "onPointerLeave",
+  "onPointerMove",
+  "onPointerOut",
+  "onPointerOver",
+  "onPointerUp",
+  "onProgress",
+  "onRateChange",
+  "onReset",
+  "onScroll",
+  "onSeeked",
+  "onSeeking",
+  "onSelect",
+  "onStalled",
+  "onSubmit",
+  "onSuspend",
+  "onTimeUpdate",
+  "onToggle",
+  "onTouchCancel",
+  "onTouchEnd",
+  "onTouchMove",
+  "onTouchStart",
+  "onTransitionEnd",
+  "onVolumeChange",
+  "onWaiting",
+  "onWheel",
+];
 
-function kebabToCamel(string: string) {
-  let parts = string.split("-");
-  return parts
-    .map((item, index) =>
-      index === 0
-        ? item.toLowerCase()
-        : item.charAt(0).toUpperCase() + item.slice(1).toLowerCase()
-    )
-    .join("");
-}
-
-function coerceBooleanizeAttribute(
-  name: string,
-  value: string,
-  trueLiterals?: string[]
-) {
-  if (value === "" || value === "true" || value === name.toLowerCase()) {
-    if (trueLiterals?.includes(name)) {
-      return jsxAttribute(
-        jsxIdentifier(name),
-        jsxExpressionContainer(booleanLiteral(true))
-      );
-    }
-    return jsxAttribute(jsxIdentifier(name), null);
-  } else if (value === "false") {
-    return jsxAttribute(
-      jsxIdentifier(name),
-      jsxExpressionContainer(booleanLiteral(false))
-    );
-  }
-
-  return jsxAttribute(jsxIdentifier(name), stringLiteral(value));
-}
+// List of attributes that are lower-cased in HTML but have to be camel-cased in
+// JSX code. Taken from https://reactjs.org/docs/dom-elements.html
+const lowercasedAttributes = [
+  "accessKey",
+  "autoComplete",
+  "charSet",
+  "classID",
+  "colSpan",
+  "contextMenu",
+  "controlsList",
+  "crossOrigin",
+  "dateTime",
+  "encType",
+  "formAction",
+  "formEncType",
+  "formMethod",
+  "formTarget",
+  "frameBorder",
+  "hrefLang",
+  "inputMode",
+  "keyParams",
+  "keyType",
+  "mediaGroup",
+  "radioGroup",
+  "srcDoc",
+  "srcLang",
+  "srcSet",
+  "useMap",
+];
