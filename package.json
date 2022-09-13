@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "tsc && node ./dist/index.js",
-    "test": "jest"
+    "test": "jest",
+    "coverage": "jest --coverage",
+    "check-types": "tsc --noEmit",
+    "check": "tsc --noEmit && npm run test"
   },
   "keywords": [],
   "author": "",
