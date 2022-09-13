@@ -320,3 +320,23 @@ test("boolean attributes with non-boolean values are left untouched", () => {
     `<a href="example.com" download="installer.exe">Download</a>`
   );
 });
+
+test("adjacent script elements work", () => {
+  const htmlToConvert = html`
+    <script>
+      window.Example_Config = window.Example_Config || [];
+      window.Example_Config.push({ key: "XXXXXXXX" });
+    </script>
+    <script async="" src="https://widget.example.co/v2/widget.js"></script>
+  `;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(
+    `<><script>{\`
+      window.Example_Config = window.Example_Config || [];
+      window.Example_Config.push({ key: "XXXXXXXX" });
+    \`}</script>
+    <script async src="https://widget.example.co/v2/widget.js" /></>`
+  );
+});

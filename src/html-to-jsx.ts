@@ -98,25 +98,8 @@ function htmlToBabelAst(node: ChildNode, isTopLevel = true) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
       if (node.nodeName === "style" || node.nodeName === "script") {
-        const innerText = node.childNodes
-          .filter(isTextNode)
-          .map((childNode) => childNode.value)
-          .join("");
-
         return expressionStatement(
-          jsxElement(
-            jsxOpeningElement(
-              jsxIdentifier(node.nodeName),
-              convertAttributes(node.attrs),
-              false
-            ),
-            jsxClosingElement(jsxIdentifier(node.nodeName)),
-            [
-              jsxExpressionContainer(
-                templateLiteral([templateElement({ raw: innerText })], [])
-              ),
-            ]
-          )
+          createCodeElement(node.nodeName, node.attrs, node.childNodes)
         );
       }
 
@@ -136,24 +119,7 @@ function htmlToBabelAst(node: ChildNode, isTopLevel = true) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
       if (node.nodeName === "style" || node.nodeName === "script") {
-        const innerText = node.childNodes
-          .filter(isTextNode)
-          .map((childNode) => childNode.value)
-          .join("");
-
-        return jsxElement(
-          jsxOpeningElement(
-            jsxIdentifier(node.nodeName),
-            convertAttributes(node.attrs),
-            false
-          ),
-          jsxClosingElement(jsxIdentifier(node.nodeName)),
-          [
-            jsxExpressionContainer(
-              templateLiteral([templateElement({ raw: innerText })], [])
-            ),
-          ]
-        );
+        return createCodeElement(node.nodeName, node.attrs, node.childNodes);
       }
 
       return createJSXElement(node.nodeName, node.attrs, node.childNodes);
@@ -176,6 +142,37 @@ function createJSXElement(
     ),
     jsxClosingElement(jsxIdentifier(tagName)),
     childNodes.map((node) => htmlToBabelAst(node, false))
+  );
+}
+
+function createCodeElement(
+  tagName: string,
+  attributes: Attribute[],
+  childNodes: ChildNode[]
+) {
+  const innerText = childNodes
+    .filter(isTextNode)
+    .map((childNode) => childNode.value)
+    .join("");
+
+  const hasContent = innerText.trim() !== "";
+
+  const content = hasContent
+    ? [
+        jsxExpressionContainer(
+          templateLiteral([templateElement({ raw: innerText })], [])
+        ),
+      ]
+    : [];
+
+  return jsxElement(
+    jsxOpeningElement(
+      jsxIdentifier(tagName),
+      convertAttributes(attributes),
+      !hasContent
+    ),
+    hasContent ? jsxClosingElement(jsxIdentifier(tagName)) : null,
+    content
   );
 }
 
