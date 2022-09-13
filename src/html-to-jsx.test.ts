@@ -258,3 +258,35 @@ test("handles two adjacent comments", async () => {
 
   expect(convertedJSX).toBe(`<>{/* Hello */}{/* World! */}</>`);
 });
+
+test("adds template literals to the inside of style elements", async () => {
+  const htmlToConvert = html`<style>
+    body {
+      background: red;
+    }
+  </style>`;
+
+  const convertedJSX = await htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(`<style>{\`
+    body {
+      background: red;
+    }
+  \`}</style>`);
+});
+
+test("handles inner script elements", async () => {
+  const htmlToConvert = html`<div>
+    <script>
+      console.log("Hello World!");
+    </script>
+  </div>`;
+
+  const convertedJSX = await htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(`<div>
+    <script>{\`
+      console.log("Hello World!");
+    \`}</script>
+  </div>`);
+});

@@ -19,6 +19,8 @@ import {
   JSXText,
   program,
   stringLiteral,
+  templateElement,
+  templateLiteral,
 } from "@babel/types";
 import { parseFragment } from "parse5";
 import type { Attribute } from "parse5/dist/common/token";
@@ -105,6 +107,29 @@ function htmlToBabelAst(node: ChildNode, isTopLevel = true) {
     } else if (isDocumentType(node)) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
+      if (node.nodeName === "style" || node.nodeName === "script") {
+        const innerText = node.childNodes
+          .filter(isTextNode)
+          .map((childNode) => childNode.value)
+          .join("");
+
+        return expressionStatement(
+          jsxElement(
+            jsxOpeningElement(
+              jsxIdentifier(node.nodeName),
+              convertAttributes(node.attrs),
+              false
+            ),
+            jsxClosingElement(jsxIdentifier(node.nodeName)),
+            [
+              jsxExpressionContainer(
+                templateLiteral([templateElement({ raw: innerText })], [])
+              ),
+            ]
+          )
+        );
+      }
+
       return expressionStatement(
         createJSXElement(node.nodeName, node.attrs, node.childNodes)
       );
@@ -120,6 +145,27 @@ function htmlToBabelAst(node: ChildNode, isTopLevel = true) {
     } else if (isDocumentType(node)) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
+      if (node.nodeName === "style" || node.nodeName === "script") {
+        const innerText = node.childNodes
+          .filter(isTextNode)
+          .map((childNode) => childNode.value)
+          .join("");
+
+        return jsxElement(
+          jsxOpeningElement(
+            jsxIdentifier(node.nodeName),
+            convertAttributes(node.attrs),
+            false
+          ),
+          jsxClosingElement(jsxIdentifier(node.nodeName)),
+          [
+            jsxExpressionContainer(
+              templateLiteral([templateElement({ raw: innerText })], [])
+            ),
+          ]
+        );
+      }
+
       return createJSXElement(node.nodeName, node.attrs, node.childNodes);
     }
   }
