@@ -28,66 +28,72 @@ import type {
   DocumentType,
   TextNode,
 } from "parse5/dist/tree-adapters/default";
-import { convertAttributes } from "./attributes";
+import { convertAttributes } from "./convert-attributes";
 
 export async function htmlToJsx(html: string): Promise<string> {
-  const fragment = parseFragment(html.trim());
+  const htmlAst = parseFragment(html.trim());
 
-  let newAst: ExpressionStatement;
+  let babelAst: ExpressionStatement;
 
-  if (fragment.childNodes.length === 1) {
-    newAst = htmlAstToBabelJSXAst(fragment.childNodes[0]!);
+  if (htmlAst.childNodes.length === 1) {
+    babelAst = htmlToBabelAst(htmlAst.childNodes[0]!);
   } else {
-    newAst = expressionStatement(
+    babelAst = expressionStatement(
       jsxFragment(
         jsxOpeningFragment(),
         jsxClosingFragment(),
-        fragment.childNodes.map((childNode) =>
-          htmlAstToBabelJSXAst(childNode, false)
-        )
+        htmlAst.childNodes.map((childNode) => htmlToBabelAst(childNode, false))
       )
     );
   }
 
   const babelOutput = await new Promise<BabelFileResult>((resolve, reject) => {
-    transformFromAst(program([newAst]), undefined, undefined, (err, result) => {
-      if (err || result === null) reject(err);
-      else resolve(result);
-    });
+    transformFromAst(
+      program([babelAst]),
+      undefined,
+      undefined,
+      (err, result) => {
+        if (err || result === null) reject(err);
+        else resolve(result);
+      }
+    );
   });
 
   let babelCode = babelOutput.code;
 
-  if (typeof babelCode === "string") {
-    if (babelCode.endsWith(";")) {
-      babelCode = babelCode.slice(0, -1);
-    }
-
-    // Replaces comments that look like this {
-    //  /* Hello World */
-    // }
-    // with their more concise version {/* Hello World! */}
-    babelCode = babelCode.replace(/\{\s*\/\*.*?\*\/\s*\}/g, (match) => {
-      const comment = match.match(/\{\s*\/\*(.*?)\*\/\s*\}/)![1]!;
-
-      return `{/*${comment}*/}`;
-    });
-
-    return babelCode;
-  } else {
+  if (typeof babelCode !== "string") {
     throw Error("Babel Output was not a string.");
   }
+
+  // Remove trailing semicolon from Babel string
+  if (babelCode.endsWith(";")) {
+    babelCode = babelCode.slice(0, -1);
+  }
+
+  // Replaces comments that look like this
+  //   {
+  //    /* Hello World */
+  //   }
+  // with their more concise version
+  //   {/* Hello World! */}
+  babelCode = babelCode.replace(/\{\s*\/\*.*?\*\/\s*\}/g, (matchedComment) => {
+    const comment = matchedComment.match(/\{\s*\/\*(.*?)\*\/\s*\}/)![1]!;
+
+    return `{/*${comment}*/}`;
+  });
+
+  return babelCode;
 }
 
-function htmlAstToBabelJSXAst(
+function htmlToBabelAst(
   node: ChildNode,
   isTopLevel?: true
 ): ExpressionStatement;
-function htmlAstToBabelJSXAst(
+function htmlToBabelAst(
   node: ChildNode,
   isTopLevel?: false
 ): JSXExpressionContainer | JSXText | JSXElement;
-function htmlAstToBabelJSXAst(node: ChildNode, isTopLevel = true) {
+function htmlToBabelAst(node: ChildNode, isTopLevel = true) {
   if (isTopLevel) {
     if (isCommentNode(node)) {
       const block = blockStatement([]);
@@ -100,7 +106,7 @@ function htmlAstToBabelJSXAst(node: ChildNode, isTopLevel = true) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
       return expressionStatement(
-        constructJSXElement(node.nodeName, node.attrs, node.childNodes)
+        createJSXElement(node.nodeName, node.attrs, node.childNodes)
       );
     }
   } else {
@@ -114,12 +120,12 @@ function htmlAstToBabelJSXAst(node: ChildNode, isTopLevel = true) {
     } else if (isDocumentType(node)) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
-      return constructJSXElement(node.nodeName, node.attrs, node.childNodes);
+      return createJSXElement(node.nodeName, node.attrs, node.childNodes);
     }
   }
 }
 
-function constructJSXElement(
+function createJSXElement(
   tagName: string,
   attributes: Attribute[],
   childNodes: ChildNode[]
@@ -133,7 +139,7 @@ function constructJSXElement(
       !hasChildNodes
     ),
     jsxClosingElement(jsxIdentifier(tagName)),
-    childNodes.map((node) => htmlAstToBabelJSXAst(node, false))
+    childNodes.map((node) => htmlToBabelAst(node, false))
   );
 }
 

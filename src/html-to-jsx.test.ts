@@ -250,3 +250,11 @@ test("handles lowercased attributes", async () => {
 
   expect(convertedJSX).toBe(`<menu contextMenu="share" />`);
 });
+
+test("handles two adjacent comments", async () => {
+  const htmlToConvert = html`<!-- Hello --><!-- World! -->`;
+
+  const convertedJSX = await htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(`<>{/* Hello */}{/* World! */}</>`);
+});
