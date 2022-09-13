@@ -15,15 +15,15 @@ function html(
   return result;
 }
 
-test("works for regular HTML", async () => {
+test("works for regular HTML", () => {
   const htmlToConvert = html`<h1>Hello World!</h1>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe("<h1>Hello World!</h1>");
 });
 
-test("works with comments", async () => {
+test("works with comments", () => {
   const htmlToConvert = html`
     <h1>
       <!-- This is a comment. -->
@@ -31,7 +31,7 @@ test("works with comments", async () => {
     </h1>
   `;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<h1>
       {/* This is a comment. */}
@@ -39,140 +39,138 @@ test("works with comments", async () => {
     </h1>`);
 });
 
-test("works with only text", async () => {
+test("works with only text", () => {
   const htmlToConvert = html`Hello World!`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`"Hello World!"`);
 });
 
-test("works with only comment", async () => {
+test("works with only comment", () => {
   const htmlToConvert = html`<!-- Hello World! -->`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`{/* Hello World! */}`);
 });
 
-test("works with singular elements", async () => {
+test("works with singular elements", () => {
   const htmlToConvert = html`<h1>Hello<br />World!</h1>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<h1>Hello<br />World!</h1>`);
 });
 
-test("self-closes empty elements", async () => {
+test("self-closes empty elements", () => {
   const htmlToConvert = html`<div></div>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<div />`);
 });
 
-test("converts class to className", async () => {
+test("converts class to className", () => {
   const htmlToConvert = html`<h1 class="heading-1">Hello World!</h1>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<h1 className="heading-1">Hello World!</h1>`);
 });
 
-test("converts for to htmlFor", async () => {
+test("converts for to htmlFor", () => {
   const htmlToConvert = html`<h1 for="heading-1">Hello World!</h1>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<h1 htmlFor="heading-1">Hello World!</h1>`);
 });
 
-test("converts style tag including px values to numbers", async () => {
+test("converts style tag including px values to numbers", () => {
   const htmlToConvert = html`<h1 style="padding: 10px; background-color: red;">
     Hello World!
   </h1>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<h1 style={{
-  padding: 10,
-  backgroundColor: "red"
-}}>
+  expect(convertedJSX)
+    .toBe(`<h1 style={{ padding: 10, backgroundColor: "red" }}>
     Hello World!
   </h1>`);
 });
 
-test("works with adjacent elements", async () => {
+test("works with adjacent elements", () => {
   const htmlToConvert = html`
     <h1>Hello</h1>
     My
     <h2>World!</h2>
   `;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<><h1>Hello</h1>
     My
     <h2>World!</h2></>`);
 });
 
-test("converts tabindex to number", async () => {
+test("converts tabindex to number", () => {
   const htmlToConvert = html`<h1 tabindex="0">Hello World!</h1>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<h1 tabIndex={0}>Hello World!</h1>`);
 });
 
-test("converts contenteditable to boolean", async () => {
+test("converts contenteditable to boolean", () => {
   const htmlToConvert = html`<h1 contenteditable>Hello World!</h1>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<h1 contentEditable>Hello World!</h1>`);
 });
 
-test("converts value to boolean but leaves true in", async () => {
+test("converts value to boolean but leaves true in", () => {
   const htmlToConvert = html`<h1 value="true">Hello World!</h1>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<h1 value={true}>Hello World!</h1>`);
 });
 
-test("converts disabled to boolean but leaves true in", async () => {
+test("converts disabled to boolean but leaves true in", () => {
   const htmlToConvert = html`<h1 disabled="true">Hello World!</h1>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<h1 disabled={true}>Hello World!</h1>`);
 });
 
-test("converts playsinline to boolean", async () => {
+test("converts playsinline to boolean", () => {
   const htmlToConvert = html`<h1 playsinline="playsinline">Hello World!</h1>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<h1 playsInline>Hello World!</h1>`);
 });
 
-test("converts checked to boolean but leaves true in", async () => {
+test("converts checked to boolean but leaves true in", () => {
   const htmlToConvert = html`<h1 checked="true">Hello World!</h1>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<h1 checked={true}>Hello World!</h1>`);
 });
 
-test("converts cols to number", async () => {
+test("converts cols to number", () => {
   const htmlToConvert = html`<h1 cols="12">Hello World!</h1>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<h1 cols={12}>Hello World!</h1>`);
 });
 
-test("converts svg attributes", async () => {
+test("converts svg attributes", () => {
   const htmlToConvert = html`<svg
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
@@ -188,7 +186,7 @@ test("converts svg attributes", async () => {
     />
   </svg>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX)
     .toBe(`<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -196,12 +194,12 @@ test("converts svg attributes", async () => {
   </svg>`);
 });
 
-test("handles onclick and converts function", async () => {
+test("handles onclick and converts function", () => {
   const htmlToConvert = html`<button onclick="handleButtonClick()">
     Button
   </button>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(
     `<button onClick={handleButtonClick}>
@@ -210,63 +208,59 @@ test("handles onclick and converts function", async () => {
   );
 });
 
-test("handles onclick with more complex statement", async () => {
+test("handles onclick with more complex statement", () => {
   const htmlToConvert = html`<button onclick="window.scrollY = 0">
     Button
   </button>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(
-    `<button onClick={event => {
-  window.scrollY = 0;
-}}>
+    `<button onClick={event => { window.scrollY = 0; }}>
     Button
   </button>`
   );
 });
 
-test("handles onclick with invalid code inside", async () => {
+test("handles onclick with invalid code inside", () => {
   const htmlToConvert = html`<button onclick="this is invalid code.">
     Button
   </button>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(
-    `<button onClick={event => {
-  // TODO: Fix event handler code
-  \`this is invalid code.\`;
-}}>
+    `<button onClick={event => { // TODO: Fix event handler code
+\`this is invalid code.\`; }}>
     Button
   </button>`
   );
 });
 
-test("handles lowercased attributes", async () => {
+test("handles lowercased attributes", () => {
   const htmlToConvert = html`<menu contextmenu="share"></menu>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<menu contextMenu="share" />`);
 });
 
-test("handles two adjacent comments", async () => {
+test("handles two adjacent comments", () => {
   const htmlToConvert = html`<!-- Hello --><!-- World! -->`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<>{/* Hello */}{/* World! */}</>`);
 });
 
-test("adds template literals to the inside of style elements", async () => {
+test("adds template literals to the inside of style elements", () => {
   const htmlToConvert = html`<style>
     body {
       background: red;
     }
   </style>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<style>{\`
     body {
@@ -275,14 +269,14 @@ test("adds template literals to the inside of style elements", async () => {
   \`}</style>`);
 });
 
-test("handles inner script elements", async () => {
+test("handles inner script elements", () => {
   const htmlToConvert = html`<div>
     <script>
       console.log("Hello World!");
     </script>
   </div>`;
 
-  const convertedJSX = await htmlToJsx(htmlToConvert);
+  const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<div>
     <script>{\`

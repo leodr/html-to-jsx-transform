@@ -1,4 +1,4 @@
-import { BabelFileResult, transformFromAst } from "@babel/core";
+import generate from "@babel/generator";
 import {
   addComment,
   blockStatement,
@@ -32,7 +32,7 @@ import type {
 } from "parse5/dist/tree-adapters/default";
 import { convertAttributes } from "./convert-attributes";
 
-export async function htmlToJsx(html: string): Promise<string> {
+export function htmlToJsx(html: string): string {
   const htmlAst = parseFragment(html.trim());
 
   let babelAst: ExpressionStatement;
@@ -49,17 +49,7 @@ export async function htmlToJsx(html: string): Promise<string> {
     );
   }
 
-  const babelOutput = await new Promise<BabelFileResult>((resolve, reject) => {
-    transformFromAst(
-      program([babelAst]),
-      undefined,
-      undefined,
-      (err, result) => {
-        if (err || result === null) reject(err);
-        else resolve(result);
-      }
-    );
-  });
+  const babelOutput = generate(program([babelAst]), { concise: true });
 
   let babelCode = babelOutput.code;
 
