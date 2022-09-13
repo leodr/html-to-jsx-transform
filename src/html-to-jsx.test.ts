@@ -284,3 +284,39 @@ test("handles inner script elements", () => {
     \`}</script>
   </div>`);
 });
+
+test("number attributes that are not a number remain untouched", () => {
+  const htmlToConvert = html`<h1 tabindex="wronginput">Hello World!</h1>`;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(`<h1 tabIndex="wronginput">Hello World!</h1>`);
+});
+
+test("svg boolean attributes get converted", () => {
+  const htmlToConvert = html`<path focusable="true"></path>`;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(`<path focusable />`);
+});
+
+test("false boolean attributes get converted to boolean expression", () => {
+  const htmlToConvert = `<input checked="false">`;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(`<input checked={false} />`);
+});
+
+test("boolean attributes with non-boolean values are left untouched", () => {
+  const htmlToConvert = html`<a href="example.com" download="installer.exe"
+    >Download</a
+  >`;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(
+    `<a href="example.com" download="installer.exe">Download</a>`
+  );
+});
