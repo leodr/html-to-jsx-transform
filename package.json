@@ -1,6 +1,6 @@
 {
   "name": "html-to-jsx-transform",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A library for converting an HTML string into a JSX string using ASTs.",
   "keywords": [
     "html",
