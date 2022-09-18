@@ -24,6 +24,9 @@
     "prepublishOnly": "npm run check && npm run clean && npm run build",
     "test": "jest"
   },
+  "prettier": {
+    "proseWrap": "always"
+  },
   "dependencies": {
     "@babel/generator": "^7.19.0",
     "@babel/parser": "^7.19.0",
