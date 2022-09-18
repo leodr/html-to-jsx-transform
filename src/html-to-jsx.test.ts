@@ -340,3 +340,51 @@ test("adjacent script elements work", () => {
     <script async src="https://widget.example.co/v2/widget.js" /></>`
   );
 });
+
+test("label and input works", () => {
+  const htmlToConvert = html`
+    <!-- Hello world -->
+    <div class="awesome" style="border: 1px solid red">
+      <label for="name">Enter your name: </label>
+      <input type="text" id="name" />
+    </div>
+    <p>Enter your HTML here</p>
+  `;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(
+    `<>{ /* Hello world */ }
+    <div className="awesome" style={{ border: "1px solid red" }}>
+      <label htmlFor="name">Enter your name: </label>
+      <input type="text" id="name" />
+    </div>
+    <p>Enter your HTML here</p></>`
+  );
+});
+
+test("Tailwind CSS sample works", () => {
+  const htmlToConvert = html`
+    <button
+      class="max-w-xs bg-gray-800 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+      id="user-menu"
+      aria-haspopup="true"
+    >
+      <span class="sr-only">Open user menu</span>
+      <img
+        class="h-8 w-8 rounded-full"
+        src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+        alt=""
+      />
+    </button>
+  `;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(
+    `<button className="max-w-xs bg-gray-800 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" id="user-menu" aria-haspopup="true">
+      <span className="sr-only">Open user menu</span>
+      <img className="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" />
+    </button>`
+  );
+});
