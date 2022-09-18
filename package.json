@@ -14,6 +14,10 @@
   "author": "Leo Driesch <dev@leodriesch.com> (https://github.com/leodr)",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist/*",
+    "readme-assets/*"
+  ],
   "scripts": {
     "build": "tsc",
     "check": "tsc --noEmit && npm run test",
