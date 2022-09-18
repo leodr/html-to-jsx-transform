@@ -51,7 +51,7 @@ export function htmlToJsx(html: string): string {
 
   const babelOutput = generate(program([babelAst]), { concise: true });
 
-  let babelCode = babelOutput.code;
+  let babelCode = babelOutput.code.trim();
 
   if (typeof babelCode !== "string") {
     throw Error("Babel Output was not a string.");
@@ -61,18 +61,6 @@ export function htmlToJsx(html: string): string {
   if (babelCode.endsWith(";")) {
     babelCode = babelCode.slice(0, -1);
   }
-
-  // Replaces comments that look like this
-  //   {
-  //    /* Hello World */
-  //   }
-  // with their more concise version
-  //   {/* Hello World! */}
-  babelCode = babelCode.replace(/\{\s*\/\*.*?\*\/\s*\}/g, (matchedComment) => {
-    const comment = matchedComment.match(/\{\s*\/\*(.*?)\*\/\s*\}/)![1]!;
-
-    return `{/*${comment}*/}`;
-  });
 
   return babelCode;
 }

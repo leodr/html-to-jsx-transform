@@ -34,7 +34,7 @@ test("works with comments", () => {
   const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(`<h1>
-      {/* This is a comment. */}
+      { /* This is a comment. */ }
       Hello World!
     </h1>`);
 });
@@ -52,7 +52,7 @@ test("works with only comment", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`{/* Hello World! */}`);
+  expect(convertedJSX).toBe(`{ /* Hello World! */ }`);
 });
 
 test("works with singular elements", () => {
@@ -250,7 +250,7 @@ test("handles two adjacent comments", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<>{/* Hello */}{/* World! */}</>`);
+  expect(convertedJSX).toBe(`<>{ /* Hello */ }{ /* World! */ }</>`);
 });
 
 test("adds template literals to the inside of style elements", () => {
