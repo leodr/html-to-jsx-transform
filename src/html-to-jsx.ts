@@ -4,6 +4,7 @@ import {
   blockStatement,
   expressionStatement,
   ExpressionStatement,
+  jsxAttribute,
   jsxClosingElement,
   jsxClosingFragment,
   jsxElement,
@@ -11,6 +12,7 @@ import {
   jsxEmptyExpression,
   jsxExpressionContainer,
   JSXExpressionContainer,
+  JSXFragment,
   jsxFragment,
   jsxIdentifier,
   jsxOpeningElement,
@@ -31,20 +33,22 @@ import type {
   TextNode,
 } from "parse5/dist/tree-adapters/default";
 import { convertAttributes } from "./convert-attributes";
+import { splitMergeTags } from "./split-merge-tags";
 
 export function htmlToJsx(html: string): string {
   const htmlAst = parseFragment(html.trim());
 
   let babelAst: ExpressionStatement;
-
   if (htmlAst.childNodes.length === 1) {
-    babelAst = htmlToBabelAst(htmlAst.childNodes[0]!);
+    babelAst = htmlToBabelAst(htmlAst.childNodes[0]!, true);
   } else {
     babelAst = expressionStatement(
       jsxFragment(
         jsxOpeningFragment(),
         jsxClosingFragment(),
-        htmlAst.childNodes.map((childNode) => htmlToBabelAst(childNode, false))
+        htmlAst.childNodes.flatMap((childNode) =>
+          htmlToBabelAst(childNode, false)
+        )
       )
     );
   }
@@ -67,13 +71,10 @@ export function htmlToJsx(html: string): string {
 
 function htmlToBabelAst(
   node: ChildNode,
-  isTopLevel?: true
-): ExpressionStatement;
-function htmlToBabelAst(
-  node: ChildNode,
-  isTopLevel?: false
-): JSXExpressionContainer | JSXText | JSXElement;
-function htmlToBabelAst(node: ChildNode, isTopLevel = true) {
+  isTopLevel: false
+): (JSXExpressionContainer | JSXText | JSXElement)[];
+function htmlToBabelAst(node: ChildNode, isTopLevel: true): ExpressionStatement;
+function htmlToBabelAst(node: ChildNode, isTopLevel: boolean) {
   if (isTopLevel) {
     if (isCommentNode(node)) {
       const block = blockStatement([]);
@@ -81,7 +82,8 @@ function htmlToBabelAst(node: ChildNode, isTopLevel = true) {
 
       return block;
     } else if (isTextNode(node)) {
-      return expressionStatement(stringLiteral(node.value));
+      const result = mapTextToTemplateLiteral(node);
+      return expressionStatement(result);
     } else if (isDocumentType(node)) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
@@ -100,17 +102,22 @@ function htmlToBabelAst(node: ChildNode, isTopLevel = true) {
       const emptyExpression = jsxEmptyExpression();
       addComment(emptyExpression, "inner", node.data, false);
 
-      return jsxExpressionContainer(emptyExpression);
+      return [jsxExpressionContainer(emptyExpression)] as (
+        | JSXExpressionContainer
+        | JSXText
+        | JSXElement
+      )[];
     } else if (isTextNode(node)) {
-      return jsxText(node.value);
+      const result = mapTextToJSX(node);
+      return result;
     } else if (isDocumentType(node)) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
       if (node.nodeName === "style" || node.nodeName === "script") {
-        return createCodeElement(node.nodeName, node.attrs, node.childNodes);
+        return [createCodeElement(node.nodeName, node.attrs, node.childNodes)];
       }
 
-      return createJSXElement(node.nodeName, node.attrs, node.childNodes);
+      return [createJSXElement(node.nodeName, node.attrs, node.childNodes)];
     }
   }
 }
@@ -129,7 +136,7 @@ function createJSXElement(
       !hasChildNodes
     ),
     jsxClosingElement(jsxIdentifier(tagName)),
-    childNodes.map((node) => htmlToBabelAst(node, false))
+    childNodes.flatMap((node) => htmlToBabelAst(node, false))
   );
 }
 
@@ -161,6 +168,56 @@ function createCodeElement(
     ),
     hasContent ? jsxClosingElement(jsxIdentifier(tagName)) : null,
     content
+  );
+}
+
+function createMergeScriptElement(value: string) {
+  return jsxElement(
+    jsxOpeningElement(jsxIdentifier("script"), [
+      {
+        name: jsxIdentifier("type"),
+        value: stringLiteral("text/x-merge-tag"),
+        type: "JSXAttribute",
+      },
+    ]),
+    jsxClosingElement(jsxIdentifier("script")),
+    [
+      jsxExpressionContainer(
+        templateLiteral([templateElement({ raw: value })], [])
+      ),
+    ]
+  );
+}
+
+function mapTextToJSX(node: TextNode) {
+  const parts = splitMergeTags(node.value);
+  return parts.map((part) => {
+    if (part.type === "string") {
+      return jsxText(part.value);
+    } else {
+      return createMergeScriptElement(part.value);
+    }
+  });
+}
+
+function mapTextToTemplateLiteral(node: TextNode) {
+  const parts = splitMergeTags(node.value);
+  if (parts.length === 1 && parts[0]?.type === "string")
+    return stringLiteral(node.value);
+  return templateLiteral(
+    parts.map((part, index) => {
+      if (part.type === "string") return templateElement({ raw: part.value });
+      else {
+        return templateElement({ raw: `part${index}` });
+      }
+    }),
+    parts
+      .filter((part) => part.type === "merge")
+      .map((part) => {
+        if (part.type === "merge") return createMergeScriptElement(part.value);
+        // unreachable
+        return stringLiteral("");
+      })
   );
 }
 

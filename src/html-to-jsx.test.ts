@@ -388,3 +388,27 @@ test("Tailwind CSS sample works", () => {
     </button>`
   );
 });
+
+test("Example with merge tags", () => {
+  const htmlToConvert = html`
+    {% if email %}
+    <button class="max-w-8">
+      <span>Send Email</span>
+    </button>
+    {% else %}
+    <button class="max-w-8 bg-blue"><span>Call</span></button>
+    {% /if %}
+  `;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(
+    `<><script type="text/x-merge-tag">{\`{% if email %}\`}</script>
+    <button className="max-w-8">
+      <span>Send Email</span>
+    </button>
+    <script type="text/x-merge-tag">{\`{% else %}\`}</script>
+    <button className="max-w-8 bg-blue"><span>Call</span></button>
+    <script type="text/x-merge-tag">{\`{% /if %}\`}</script></>`
+  );
+});
