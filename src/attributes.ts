@@ -281,7 +281,4 @@ export const lowercasedAttributes = [
 /**
  * Don't strip the px suffix from these style attributes
  */
-export const styleDontStripPx = [
-  'line-height',
-  'font-size',
-]
+export const styleDontStripPx = ["line-height", "font-size"];
