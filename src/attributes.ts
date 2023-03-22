@@ -280,5 +280,20 @@ export const lowercasedAttributes = [
 
 /**
  * Don't strip the px suffix from these style attributes
+ * because they can contain both length (e.g. `13px`) and
+ * unitless values (e.g. `3`), which have different
+ * meanings.
+ *
+ * (Background: React automatically adds a `px` to unitless
+ * numbers specified in style attributes, so these attributes
+ * should not be included in `px` stripping).
  */
-export const styleDontStripPx = ["line-height", "font-size"];
+export const styleDontStripPx = [
+  "line-height",
+  "border-width",
+  "flex",
+  "flex-basis",
+  "mask-border-outset",
+  "mask-box-outset",
+  "mask-border-width",
+];
