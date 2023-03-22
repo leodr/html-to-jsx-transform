@@ -440,7 +440,7 @@ test("HTML entities are not created in string literals or template literals", ()
   expect(htmlToJsx(`your email is "{{ email ++ "\xA0" }}"`)).toEqual(
     `<>your email is &quot;<script type="text/x-merge-tag">{\`{{ email ++ "\xA0" }}\`}</script>&quot;</>`
   );
-  expect(htmlToJsx(`<style>background-color: blue;</style`)).toEqual(
-    `<style>{\`background-color: blue;\`}`
+  expect(htmlToJsx(`<style>background-color: blue;</style>`)).toEqual(
+    `<style>{\`background-color: blue;\`}</style>`
   );
 });

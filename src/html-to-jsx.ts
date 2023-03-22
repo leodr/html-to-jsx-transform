@@ -36,7 +36,6 @@ import { splitMergeTags } from "./split-merge-tags";
 
 export function htmlToJsx(html: string): string {
   const htmlAst = parseFragment(html.trim());
-  console.log(htmlAst?.childNodes?.[0]);
 
   let babelAst: ExpressionStatement;
   if (htmlAst.childNodes.length === 1) {
