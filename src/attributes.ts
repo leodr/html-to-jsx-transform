@@ -65,6 +65,7 @@ export const svgCoerceToBooleanAttributes = [
 
 // These are HTML attributes that must be positive numbers.
 export const numberAttributes = [
+  "border",
   "cellPadding",
   "cellSpacing",
   "cols",
@@ -253,6 +254,8 @@ export const lowercasedAttributes = [
   "charSet",
   "classID",
   "colSpan",
+  "cellSpacing",
+  "cellMargin",
   "contextMenu",
   "controlsList",
   "crossOrigin",
@@ -274,3 +277,11 @@ export const lowercasedAttributes = [
   "srcSet",
   "useMap",
 ];
+
+/**
+ * Don't strip the px suffix from these style attributes
+ */
+export const styleDontStripPx = [
+  'line-height',
+  'font-size',
+]

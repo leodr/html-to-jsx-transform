@@ -100,6 +100,13 @@ test("converts style tag including px values to numbers", () => {
   </h1>`);
 });
 
+test("px values are not converted for specified CSS attributes", () => {
+  const htmlToConvert = html`<h1 style="line-height: 14px; font-size: 16px;">Hello World!</h1>`;
+  const convertedJSX = htmlToJsx(htmlToConvert);
+  expect(convertedJSX)
+    .toBe(`<h1 style={{ lineHeight: "14px", fontSize: "16px" }}>Hello World!</h1>`)
+});
+
 test("works with adjacent elements", () => {
   const htmlToConvert = html`
     <h1>Hello</h1>
@@ -308,6 +315,14 @@ test("false boolean attributes get converted to boolean expression", () => {
 
   expect(convertedJSX).toBe(`<input checked={false} />`);
 });
+
+test("border attributes are converted to numbers", () => {
+  const htmlToConvert = `<table border="0"></table>`;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+  
+  expect(convertedJSX).toBe(`<table border={0} />`);
+})
 
 test("boolean attributes with non-boolean values are left untouched", () => {
   const htmlToConvert = html`<a href="example.com" download="installer.exe"
