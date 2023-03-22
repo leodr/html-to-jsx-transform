@@ -20,7 +20,6 @@
     "noPropertyAccessFromIndexSignature": true,
     "noUncheckedIndexedAccess": true,
     "noUnusedParameters": true,
-    "importsNotUsedAsValues": "error",
     "declaration": true
   }
 }

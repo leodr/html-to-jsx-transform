@@ -25,6 +25,7 @@ import {
   lowercasedAttributes,
   numberAttributes,
   renamedAttributes,
+  styleDontStripPx,
   svgCamelizedAttributes,
   svgCoerceToBooleanAttributes,
 } from "./attributes";
@@ -113,12 +114,13 @@ function convertStyleToObjectExpression(style: string) {
   const properties: Array<ObjectProperty> = [];
 
   parseStyleString(style, (name, value) => {
+    // Don't remove `px` where this changes the meaning of the attribute value
+    const canStripPx = !styleDontStripPx.includes(name.toLowerCase());
     const pxValueMatch = value.match(MATCH_PX_VALUE);
-
     properties.push(
       objectProperty(
         identifier(camelize(name)),
-        pxValueMatch !== null
+        pxValueMatch !== null && canStripPx
           ? numericLiteral(Number(pxValueMatch[1]))
           : stringLiteral(value)
       )
