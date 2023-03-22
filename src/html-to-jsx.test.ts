@@ -412,3 +412,13 @@ test("Example with merge tags", () => {
     <script type="text/x-merge-tag">{\`{% /if %}\`}</script></>`
   );
 });
+
+test("Merge tag at top-level", () => {
+  const htmlToConvert = html`{{ email | to_lower() }}`;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(
+    `<script type="text/x-merge-tag">{\`{{ email | to_lower() }}\`}</script>`
+  );
+});

@@ -4,7 +4,6 @@ import {
   blockStatement,
   expressionStatement,
   ExpressionStatement,
-  jsxAttribute,
   jsxClosingElement,
   jsxClosingFragment,
   jsxElement,
@@ -12,7 +11,6 @@ import {
   jsxEmptyExpression,
   jsxExpressionContainer,
   JSXExpressionContainer,
-  JSXFragment,
   jsxFragment,
   jsxIdentifier,
   jsxOpeningElement,
@@ -69,11 +67,11 @@ export function htmlToJsx(html: string): string {
   return babelCode;
 }
 
+function htmlToBabelAst(node: ChildNode, isTopLevel: true): ExpressionStatement;
 function htmlToBabelAst(
   node: ChildNode,
   isTopLevel: false
 ): (JSXExpressionContainer | JSXText | JSXElement)[];
-function htmlToBabelAst(node: ChildNode, isTopLevel: true): ExpressionStatement;
 function htmlToBabelAst(node: ChildNode, isTopLevel: boolean) {
   if (isTopLevel) {
     if (isCommentNode(node)) {
@@ -82,8 +80,7 @@ function htmlToBabelAst(node: ChildNode, isTopLevel: boolean) {
 
       return block;
     } else if (isTextNode(node)) {
-      const result = mapTextToTemplateLiteral(node);
-      return expressionStatement(result);
+      return expressionStatement(mapTextToTopLevel(node));
     } else if (isDocumentType(node)) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
@@ -108,8 +105,7 @@ function htmlToBabelAst(node: ChildNode, isTopLevel: boolean) {
         | JSXElement
       )[];
     } else if (isTextNode(node)) {
-      const result = mapTextToJSX(node);
-      return result;
+      return mapTextToJSX(node);
     } else if (isDocumentType(node)) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
@@ -171,7 +167,14 @@ function createCodeElement(
   );
 }
 
-function createMergeScriptElement(value: string) {
+/**
+ * Represent the given string as a JSX <script> element
+ * with `type="text/x-merge-tag"`
+ *
+ * @param value the string to mark up
+ * @returns a JSX `<script>` tag containing the specified string
+ */
+function createMergeTagScriptElement(value: string) {
   return jsxElement(
     jsxOpeningElement(jsxIdentifier("script"), [
       {
@@ -191,33 +194,29 @@ function createMergeScriptElement(value: string) {
 
 function mapTextToJSX(node: TextNode) {
   const parts = splitMergeTags(node.value);
-  return parts.map((part) => {
-    if (part.type === "string") {
-      return jsxText(part.value);
-    } else {
-      return createMergeScriptElement(part.value);
-    }
-  });
+  return parts.map((part) =>
+    part.type === "string"
+      ? jsxText(part.value)
+      : createMergeTagScriptElement(part.value)
+  );
 }
 
-function mapTextToTemplateLiteral(node: TextNode) {
+function mapTextToTopLevel(node: TextNode) {
   const parts = splitMergeTags(node.value);
-  if (parts.length === 1 && parts[0]?.type === "string")
-    return stringLiteral(node.value);
-  return templateLiteral(
-    parts.map((part, index) => {
-      if (part.type === "string") return templateElement({ raw: part.value });
-      else {
-        return templateElement({ raw: `part${index}` });
-      }
-    }),
-    parts
-      .filter((part) => part.type === "merge")
-      .map((part) => {
-        if (part.type === "merge") return createMergeScriptElement(part.value);
-        // unreachable
-        return stringLiteral("");
-      })
+  // If its a single part, use a string literal or direct script tag instead
+  if (parts.length === 1)
+    return parts[0]?.type === "string"
+      ? stringLiteral(node.value)
+      : createMergeTagScriptElement(node.value);
+
+  return jsxFragment(
+    jsxOpeningFragment(),
+    jsxClosingFragment(),
+    parts.map((part) =>
+      part.type === "string"
+        ? jsxText(part.value)
+        : createMergeTagScriptElement(part.value)
+    )
   );
 }
 

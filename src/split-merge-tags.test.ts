@@ -64,3 +64,16 @@ test("splitMergeTags handles escaped merge tag characters", () => {
     { type: "merge", value: "{{phoneNumber }}" },
   ]);
 });
+
+test("splitMergeTags handles escaped merge tag characters", () => {
+  expect(
+    splitMergeTags(
+      "this is my { '\\{' + email } and this is my {{phoneNumber }}"
+    )
+  ).toEqual([
+    { type: "string", value: "this is my " },
+    { type: "merge", value: "{ '\\{' + email }" },
+    { type: "string", value: " and this is my " },
+    { type: "merge", value: "{{phoneNumber }}" },
+  ]);
+});
