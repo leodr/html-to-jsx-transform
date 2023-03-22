@@ -30,11 +30,13 @@ import type {
   DocumentType,
   TextNode,
 } from "parse5/dist/tree-adapters/default";
+import { encode } from "html-entities";
 import { convertAttributes } from "./convert-attributes";
 import { splitMergeTags } from "./split-merge-tags";
 
 export function htmlToJsx(html: string): string {
   const htmlAst = parseFragment(html.trim());
+  console.log(htmlAst?.childNodes?.[0]);
 
   let babelAst: ExpressionStatement;
   if (htmlAst.childNodes.length === 1) {
@@ -118,6 +120,10 @@ function htmlToBabelAst(node: ChildNode, isTopLevel: boolean) {
   }
 }
 
+function encodeText(text: string) {
+  return encode(text, { mode: "nonAsciiPrintable", level: "html5" });
+}
+
 function createJSXElement(
   tagName: string,
   attributes: Attribute[],
@@ -196,7 +202,7 @@ function mapTextToJSX(node: TextNode) {
   const parts = splitMergeTags(node.value);
   return parts.map((part) =>
     part.type === "string"
-      ? jsxText(part.value)
+      ? jsxText(encodeText(part.value))
       : createMergeTagScriptElement(part.value)
   );
 }
@@ -212,10 +218,10 @@ function mapTextToTopLevel(node: TextNode) {
   return jsxFragment(
     jsxOpeningFragment(),
     jsxClosingFragment(),
-    parts.map((part) =>
-      part.type === "string"
-        ? jsxText(part.value)
-        : createMergeTagScriptElement(part.value)
+    parts.map(({ type, value }) =>
+      type === "string"
+        ? jsxText(encodeText(value))
+        : createMergeTagScriptElement(value)
     )
   );
 }

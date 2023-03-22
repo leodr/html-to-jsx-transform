@@ -422,3 +422,25 @@ test("Merge tag at top-level", () => {
     `<script type="text/x-merge-tag">{\`{{ email | to_lower() }}\`}</script>`
   );
 });
+
+test("HTML entities are preserved in JSX text", () => {
+  const htmlToConvert = html`<span
+    >This has&nbsp;a non-breaking space and a &lt; symbol</span
+  >`;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(
+    `<span>This has&nbsp;a non-breaking space and a &lt; symbol</span>`
+  );
+});
+
+test("HTML entities are not created in string literals or template literals", () => {
+  expect(htmlToJsx(`some&nbsp;text`)).toEqual(`"some\\xA0text"`);
+  expect(htmlToJsx(`your email is "{{ email ++ "\xA0" }}"`)).toEqual(
+    `<>your email is &quot;<script type="text/x-merge-tag">{\`{{ email ++ "\xA0" }}\`}</script>&quot;</>`
+  );
+  expect(htmlToJsx(`<style type="text/css">background-color: blue;</style>`)).toEqual(
+    `<style type="text/css">{\`background-color: blue;\`}</style>`
+  );
+});
