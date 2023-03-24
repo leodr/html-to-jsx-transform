@@ -1,3 +1,5 @@
+export type TextPart = { value: string; type: "string" | "merge" };
+
 /**
  * Split a string into parts based on the presence
  * of merge tags (`{ ... }`).
@@ -17,7 +19,7 @@
  */
 export function splitMergeTags(str: string) {
   let bal = 0;
-  const parts: { value: string; type: "string" | "merge" }[] = [];
+  const parts: TextPart[] = [];
   let part = "";
   const pushStringPart = (part: string) =>
     part.length > 0 && parts.push({ type: "string" as const, value: part });

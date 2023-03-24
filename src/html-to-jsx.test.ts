@@ -423,13 +423,13 @@ test("Example with merge tags", () => {
   const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(
-    `<><script type="text/x-merge-tag">{\`{% if email %}\`}</script>
+    `<>{ /*$merge: {% if email %}*/ }
     <button className="max-w-8">
       <span>Send Email</span>
     </button>
-    <script type="text/x-merge-tag">{\`{% else %}\`}</script>
+    { /*$merge: {% else %}*/ }
     <button className="max-w-8 bg-blue"><span>Call</span></button>
-    <script type="text/x-merge-tag">{\`{% /if %}\`}</script></>`
+    { /*$merge: {% /if %}*/ }</>`
   );
 });
 
@@ -438,9 +438,7 @@ test("Merge tag at top-level", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(
-    `<script type="text/x-merge-tag">{\`{{ email | to_lower() }}\`}</script>`
-  );
+  expect(convertedJSX).toBe(`{ /*$merge: {{ email | to_lower() }}*/ }`);
 });
 
 test("HTML entities are preserved in JSX text", () => {
@@ -458,7 +456,7 @@ test("HTML entities are preserved in JSX text", () => {
 test("HTML entities are not created in string literals or template literals", () => {
   expect(htmlToJsx(`some&nbsp;text`)).toEqual(`"some\\xA0text"`);
   expect(htmlToJsx(`your email is "{{ email ++ "\xA0" }}"`)).toEqual(
-    `<>your email is &quot;<script type="text/x-merge-tag">{\`{{ email ++ "\xA0" }}\`}</script>&quot;</>`
+    `<>your email is &quot;{ /*$merge: {{ email ++ "\xA0" }}*/ }&quot;</>`
   );
   expect(htmlToJsx(`<style>background-color: blue;</style>`)).toEqual(
     `<style>{\`background-color: blue;\`}</style>`

@@ -32,7 +32,7 @@ import type {
 } from "parse5/dist/tree-adapters/default";
 import { encode } from "html-entities";
 import { convertAttributes } from "./convert-attributes";
-import { splitMergeTags } from "./split-merge-tags";
+import { splitMergeTags, TextPart } from "./split-merge-tags";
 
 export function htmlToJsx(html: string): string {
   const htmlAst = parseFragment(html.trim());
@@ -81,7 +81,8 @@ function htmlToBabelAst(node: ChildNode, isTopLevel: boolean) {
 
       return block;
     } else if (isTextNode(node)) {
-      return expressionStatement(mapTextToTopLevel(node));
+      const parts = splitMergeTags(node.value);
+      return mapTextPartsToTopLevel(parts);
     } else if (isDocumentType(node)) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
@@ -106,7 +107,8 @@ function htmlToBabelAst(node: ChildNode, isTopLevel: boolean) {
         | JSXElement
       )[];
     } else if (isTextNode(node)) {
-      return mapTextToJSX(node);
+      const parts = splitMergeTags(node.value);
+      return mapTextPartsToJSX(parts);
     } else if (isDocumentType(node)) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
@@ -173,54 +175,40 @@ function createCodeElement(
 }
 
 /**
- * Represent the given string as a JSX <script> element
- * with `type="text/x-merge-tag"`
+ * Represent the given string as a JSX comment
  *
  * @param value the string to mark up
  * @returns a JSX `<script>` tag containing the specified string
  */
-function createMergeTagScriptElement(value: string) {
-  return jsxElement(
-    jsxOpeningElement(jsxIdentifier("script"), [
-      {
-        name: jsxIdentifier("type"),
-        value: stringLiteral("text/x-merge-tag"),
-        type: "JSXAttribute",
-      },
-    ]),
-    jsxClosingElement(jsxIdentifier("script")),
-    [
-      jsxExpressionContainer(
-        templateLiteral([templateElement({ raw: value })], [])
-      ),
-    ]
-  );
+function createMergeTagComment<T extends Parameters<typeof addComment>[0]>(
+  node: T,
+  value: string
+) {
+  return addComment(node, "inner", `$merge: ${value}`, false);
 }
 
-function mapTextToJSX(node: TextNode) {
-  const parts = splitMergeTags(node.value);
+function mapTextPartsToJSX(parts: TextPart[]) {
   return parts.map((part) =>
     part.type === "string"
       ? jsxText(encodeText(part.value))
-      : createMergeTagScriptElement(part.value)
+      : jsxExpressionContainer(
+          createMergeTagComment(jsxEmptyExpression(), part.value)
+        )
   );
 }
 
-function mapTextToTopLevel(node: TextNode) {
-  const parts = splitMergeTags(node.value);
+function mapTextPartsToTopLevel(parts: TextPart[]) {
   // If its a single part, use a string literal or direct script tag instead
-  if (parts.length === 1)
+  if (parts.length === 1 && parts[0])
     return parts[0]?.type === "string"
-      ? stringLiteral(node.value)
-      : createMergeTagScriptElement(node.value);
+      ? expressionStatement(stringLiteral(parts[0].value))
+      : createMergeTagComment(blockStatement([]), parts[0].value);
 
-  return jsxFragment(
-    jsxOpeningFragment(),
-    jsxClosingFragment(),
-    parts.map(({ type, value }) =>
-      type === "string"
-        ? jsxText(encodeText(value))
-        : createMergeTagScriptElement(value)
+  return expressionStatement(
+    jsxFragment(
+      jsxOpeningFragment(),
+      jsxClosingFragment(),
+      mapTextPartsToJSX(parts)
     )
   );
 }
