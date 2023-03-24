@@ -290,9 +290,7 @@ export const lowercasedAttributes = [
  */
 export const styleDontStripPx = [
   "line-height",
-  "border-width",
   "flex",
-  "flex-basis",
   "mask-border-outset",
   "mask-box-outset",
   "mask-border-width",
