@@ -408,3 +408,57 @@ test("Tailwind CSS sample works", () => {
     </button>`
   );
 });
+
+test("Example with merge tags", () => {
+  const htmlToConvert = html`
+    {% if email %}
+    <button class="max-w-8">
+      <span>Send Email</span>
+    </button>
+    {% else %}
+    <button class="max-w-8 bg-blue"><span>Call</span></button>
+    {% /if %}
+  `;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(
+    `<>{ /*$merge: {% if email %}*/ }
+    <button className="max-w-8">
+      <span>Send Email</span>
+    </button>
+    { /*$merge: {% else %}*/ }
+    <button className="max-w-8 bg-blue"><span>Call</span></button>
+    { /*$merge: {% /if %}*/ }</>`
+  );
+});
+
+test("Merge tag at top-level", () => {
+  const htmlToConvert = html`{{ email | to_lower() }}`;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(`{ /*$merge: {{ email | to_lower() }}*/ }`);
+});
+
+test("HTML entities are preserved in JSX text", () => {
+  const htmlToConvert = html`<span
+    >This has&nbsp;a non-breaking space and a &lt; symbol</span
+  >`;
+
+  const convertedJSX = htmlToJsx(htmlToConvert);
+
+  expect(convertedJSX).toBe(
+    `<span>This has&nbsp;a non-breaking space and a &lt; symbol</span>`
+  );
+});
+
+test("HTML entities are not created in string literals or template literals", () => {
+  expect(htmlToJsx(`some&nbsp;text`)).toEqual(`"some\\xA0text"`);
+  expect(htmlToJsx(`your email is "{{ email ++ "\xA0" }}"`)).toEqual(
+    `<>your email is &quot;{ /*$merge: {{ email ++ "\xA0" }}*/ }&quot;</>`
+  );
+  expect(htmlToJsx(`<style>background-color: blue;</style>`)).toEqual(
+    `<style>{\`background-color: blue;\`}</style>`
+  );
+});

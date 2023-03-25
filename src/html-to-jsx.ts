@@ -30,21 +30,24 @@ import type {
   DocumentType,
   TextNode,
 } from "parse5/dist/tree-adapters/default";
+import { encode } from "html-entities";
 import { convertAttributes } from "./convert-attributes";
+import { splitMergeTags, TextPart } from "./split-merge-tags";
 
 export function htmlToJsx(html: string): string {
   const htmlAst = parseFragment(html.trim());
 
   let babelAst: ExpressionStatement;
-
   if (htmlAst.childNodes.length === 1) {
-    babelAst = htmlToBabelAst(htmlAst.childNodes[0]!);
+    babelAst = htmlToBabelAst(htmlAst.childNodes[0]!, true);
   } else {
     babelAst = expressionStatement(
       jsxFragment(
         jsxOpeningFragment(),
         jsxClosingFragment(),
-        htmlAst.childNodes.map((childNode) => htmlToBabelAst(childNode, false))
+        htmlAst.childNodes.flatMap((childNode) =>
+          htmlToBabelAst(childNode, false)
+        )
       )
     );
   }
@@ -65,15 +68,12 @@ export function htmlToJsx(html: string): string {
   return babelCode;
 }
 
+function htmlToBabelAst(node: ChildNode, isTopLevel: true): ExpressionStatement;
 function htmlToBabelAst(
   node: ChildNode,
-  isTopLevel?: true
-): ExpressionStatement;
-function htmlToBabelAst(
-  node: ChildNode,
-  isTopLevel?: false
-): JSXExpressionContainer | JSXText | JSXElement;
-function htmlToBabelAst(node: ChildNode, isTopLevel = true) {
+  isTopLevel: false
+): (JSXExpressionContainer | JSXText | JSXElement)[];
+function htmlToBabelAst(node: ChildNode, isTopLevel: boolean) {
   if (isTopLevel) {
     if (isCommentNode(node)) {
       const block = blockStatement([]);
@@ -81,7 +81,8 @@ function htmlToBabelAst(node: ChildNode, isTopLevel = true) {
 
       return block;
     } else if (isTextNode(node)) {
-      return expressionStatement(stringLiteral(node.value));
+      const parts = splitMergeTags(node.value);
+      return mapTextPartsToTopLevel(parts);
     } else if (isDocumentType(node)) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
@@ -100,19 +101,28 @@ function htmlToBabelAst(node: ChildNode, isTopLevel = true) {
       const emptyExpression = jsxEmptyExpression();
       addComment(emptyExpression, "inner", node.data, false);
 
-      return jsxExpressionContainer(emptyExpression);
+      return [jsxExpressionContainer(emptyExpression)] as (
+        | JSXExpressionContainer
+        | JSXText
+        | JSXElement
+      )[];
     } else if (isTextNode(node)) {
-      return jsxText(node.value);
+      const parts = splitMergeTags(node.value);
+      return mapTextPartsToJSX(parts);
     } else if (isDocumentType(node)) {
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
       if (node.nodeName === "style" || node.nodeName === "script") {
-        return createCodeElement(node.nodeName, node.attrs, node.childNodes);
+        return [createCodeElement(node.nodeName, node.attrs, node.childNodes)];
       }
 
-      return createJSXElement(node.nodeName, node.attrs, node.childNodes);
+      return [createJSXElement(node.nodeName, node.attrs, node.childNodes)];
     }
   }
+}
+
+function encodeText(text: string) {
+  return encode(text, { mode: "nonAsciiPrintable", level: "html5" });
 }
 
 function createJSXElement(
@@ -129,7 +139,7 @@ function createJSXElement(
       !hasChildNodes
     ),
     jsxClosingElement(jsxIdentifier(tagName)),
-    childNodes.map((node) => htmlToBabelAst(node, false))
+    childNodes.flatMap((node) => htmlToBabelAst(node, false))
   );
 }
 
@@ -161,6 +171,45 @@ function createCodeElement(
     ),
     hasContent ? jsxClosingElement(jsxIdentifier(tagName)) : null,
     content
+  );
+}
+
+/**
+ * Represent the given string as a JSX comment
+ *
+ * @param value the string to mark up
+ * @returns a JSX `<script>` tag containing the specified string
+ */
+function createMergeTagComment<T extends Parameters<typeof addComment>[0]>(
+  node: T,
+  value: string
+) {
+  return addComment(node, "inner", `$merge: ${value}`, false);
+}
+
+function mapTextPartsToJSX(parts: TextPart[]) {
+  return parts.map((part) =>
+    part.type === "string"
+      ? jsxText(encodeText(part.value))
+      : jsxExpressionContainer(
+          createMergeTagComment(jsxEmptyExpression(), part.value)
+        )
+  );
+}
+
+function mapTextPartsToTopLevel(parts: TextPart[]) {
+  // If its a single part, use a string literal or direct script tag instead
+  if (parts.length === 1 && parts[0])
+    return parts[0]?.type === "string"
+      ? expressionStatement(stringLiteral(parts[0].value))
+      : createMergeTagComment(blockStatement([]), parts[0].value);
+
+  return expressionStatement(
+    jsxFragment(
+      jsxOpeningFragment(),
+      jsxClosingFragment(),
+      mapTextPartsToJSX(parts)
+    )
   );
 }
 
