@@ -106,7 +106,7 @@ test("px values are not converted for specified CSS attributes", () => {
   </h1>`;
   const convertedJSX = htmlToJsx(htmlToConvert);
   expect(convertedJSX).toBe(
-    `<h1 style={{ lineHeight: "14px", fontSize: "16px" }}>
+    `<h1 style={{ lineHeight: "14px", fontSize: 16 }}>
     Hello World!
   </h1>`
   );
