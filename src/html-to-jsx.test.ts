@@ -462,3 +462,8 @@ test("HTML entities are not created in string literals or template literals", ()
     `<style>{\`background-color: blue;\`}</style>`
   );
 });
+
+test("Css varibles should not be processed", () => {
+  const htmlToConvert = html`<div class="container" style="width: 12px; height: 30px; --bg-color: red;" />`
+  expect(htmlToJsx(htmlToConvert)).toEqual('<div className="container" style={{ width: 12, height: 30, "--bg-color": "red" }} />')
+})
