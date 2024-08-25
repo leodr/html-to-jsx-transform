@@ -43,7 +43,7 @@ test("splitMergeTags handles merge tags at one boundary", () => {
 
 test("splitMergeTags handles multiple merge tags in a string", () => {
   expect(
-    splitMergeTags("this is my { email } and this is my {{phoneNumber }}")
+    splitMergeTags("this is my { email } and this is my {{phoneNumber }}"),
   ).toEqual([
     { type: "string", value: "this is my " },
     { type: "merge", value: "{ email }" },
@@ -55,8 +55,8 @@ test("splitMergeTags handles multiple merge tags in a string", () => {
 test("splitMergeTags handles escaped merge tag characters", () => {
   expect(
     splitMergeTags(
-      "this is my { '\\{' + email } and this is my {{phoneNumber }}"
-    )
+      "this is my { '\\{' + email } and this is my {{phoneNumber }}",
+    ),
   ).toEqual([
     { type: "string", value: "this is my " },
     { type: "merge", value: "{ '\\{' + email }" },
@@ -68,8 +68,8 @@ test("splitMergeTags handles escaped merge tag characters", () => {
 test("splitMergeTags handles escaped merge tag characters", () => {
   expect(
     splitMergeTags(
-      "this is my { '\\{' + email } and this is my {{phoneNumber }}"
-    )
+      "this is my { '\\{' + email } and this is my {{phoneNumber }}",
+    ),
   ).toEqual([
     { type: "string", value: "this is my " },
     { type: "merge", value: "{ '\\{' + email }" },

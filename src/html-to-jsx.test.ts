@@ -108,7 +108,7 @@ test("px values are not converted for specified CSS attributes", () => {
   expect(convertedJSX).toBe(
     `<h1 style={{ lineHeight: "14px", fontSize: 16 }}>
     Hello World!
-  </h1>`
+  </h1>`,
   );
 });
 
@@ -216,7 +216,7 @@ test("handles onclick and converts function", () => {
   expect(convertedJSX).toBe(
     `<button onClick={handleButtonClick}>
     Button
-  </button>`
+  </button>`,
   );
 });
 
@@ -230,7 +230,7 @@ test("handles onclick with more complex statement", () => {
   expect(convertedJSX).toBe(
     `<button onClick={event => { window.scrollY = 0; }}>
     Button
-  </button>`
+  </button>`,
   );
 });
 
@@ -245,7 +245,7 @@ test("handles onclick with invalid code inside", () => {
     `<button onClick={event => { // TODO: Fix event handler code
 \`this is invalid code.\`; }}>
     Button
-  </button>`
+  </button>`,
   );
 });
 
@@ -337,7 +337,7 @@ test("boolean attributes with non-boolean values are left untouched", () => {
   const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(
-    `<a href="example.com" download="installer.exe">Download</a>`
+    `<a href="example.com" download="installer.exe">Download</a>`,
   );
 });
 
@@ -357,7 +357,7 @@ test("adjacent script elements work", () => {
       window.Example_Config = window.Example_Config || [];
       window.Example_Config.push({ key: "XXXXXXXX" });
     \`}</script>
-    <script async src="https://widget.example.co/v2/widget.js" /></>`
+    <script async src="https://widget.example.co/v2/widget.js" /></>`,
   );
 });
 
@@ -379,7 +379,7 @@ test("label and input works", () => {
       <label htmlFor="name">Enter your name: </label>
       <input type="text" id="name" />
     </div>
-    <p>Enter your HTML here</p></>`
+    <p>Enter your HTML here</p></>`,
   );
 });
 
@@ -405,7 +405,7 @@ test("Tailwind CSS sample works", () => {
     `<button className="max-w-xs bg-gray-800 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" id="user-menu" aria-haspopup="true">
       <span className="sr-only">Open user menu</span>
       <img className="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" />
-    </button>`
+    </button>`,
   );
 });
 
@@ -429,7 +429,7 @@ test("Example with merge tags", () => {
     </button>
     { /*$merge: {% else %}*/ }
     <button className="max-w-8 bg-blue"><span>Call</span></button>
-    { /*$merge: {% /if %}*/ }</>`
+    { /*$merge: {% /if %}*/ }</>`,
   );
 });
 
@@ -449,21 +449,26 @@ test("HTML entities are preserved in JSX text", () => {
   const convertedJSX = htmlToJsx(htmlToConvert);
 
   expect(convertedJSX).toBe(
-    `<span>This has&nbsp;a non-breaking space and a &lt; symbol</span>`
+    `<span>This has&nbsp;a non-breaking space and a &lt; symbol</span>`,
   );
 });
 
 test("HTML entities are not created in string literals or template literals", () => {
   expect(htmlToJsx(`some&nbsp;text`)).toEqual(`"some\\xA0text"`);
   expect(htmlToJsx(`your email is "{{ email ++ "\xA0" }}"`)).toEqual(
-    `<>your email is &quot;{ /*$merge: {{ email ++ "\xA0" }}*/ }&quot;</>`
+    `<>your email is &quot;{ /*$merge: {{ email ++ "\xA0" }}*/ }&quot;</>`,
   );
   expect(htmlToJsx(`<style>background-color: blue;</style>`)).toEqual(
-    `<style>{\`background-color: blue;\`}</style>`
+    `<style>{\`background-color: blue;\`}</style>`,
   );
 });
 
 test("Css varibles should not be processed", () => {
-  const htmlToConvert = html`<div class="container" style="width: 12px; height: 30px; --bg-color: red;" />`
-  expect(htmlToJsx(htmlToConvert)).toEqual('<div className="container" style={{ width: 12, height: 30, "--bg-color": "red" }} />')
-})
+  const htmlToConvert = html`<div
+    class="container"
+    style="width: 12px; height: 30px; --bg-color: red;"
+  />`;
+  expect(htmlToJsx(htmlToConvert)).toEqual(
+    '<div className="container" style={{ width: 12, height: 30, "--bg-color": "red" }} />',
+  );
+});

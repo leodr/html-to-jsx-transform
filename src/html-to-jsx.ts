@@ -46,9 +46,9 @@ export function htmlToJsx(html: string): string {
         jsxOpeningFragment(),
         jsxClosingFragment(),
         htmlAst.childNodes.flatMap((childNode) =>
-          htmlToBabelAst(childNode, false)
-        )
-      )
+          htmlToBabelAst(childNode, false),
+        ),
+      ),
     );
   }
 
@@ -71,7 +71,7 @@ export function htmlToJsx(html: string): string {
 function htmlToBabelAst(node: ChildNode, isTopLevel: true): ExpressionStatement;
 function htmlToBabelAst(
   node: ChildNode,
-  isTopLevel: false
+  isTopLevel: false,
 ): (JSXExpressionContainer | JSXText | JSXElement)[];
 function htmlToBabelAst(node: ChildNode, isTopLevel: boolean) {
   if (isTopLevel) {
@@ -88,12 +88,12 @@ function htmlToBabelAst(node: ChildNode, isTopLevel: boolean) {
     } else {
       if (node.nodeName === "style" || node.nodeName === "script") {
         return expressionStatement(
-          createCodeElement(node.nodeName, node.attrs, node.childNodes)
+          createCodeElement(node.nodeName, node.attrs, node.childNodes),
         );
       }
 
       return expressionStatement(
-        createJSXElement(node.nodeName, node.attrs, node.childNodes)
+        createJSXElement(node.nodeName, node.attrs, node.childNodes),
       );
     }
   } else {
@@ -128,7 +128,7 @@ function encodeText(text: string) {
 function createJSXElement(
   tagName: string,
   attributes: Attribute[],
-  childNodes: ChildNode[]
+  childNodes: ChildNode[],
 ) {
   const hasChildNodes = childNodes.length > 0;
 
@@ -136,17 +136,17 @@ function createJSXElement(
     jsxOpeningElement(
       jsxIdentifier(tagName),
       convertAttributes(attributes),
-      !hasChildNodes
+      !hasChildNodes,
     ),
     jsxClosingElement(jsxIdentifier(tagName)),
-    childNodes.flatMap((node) => htmlToBabelAst(node, false))
+    childNodes.flatMap((node) => htmlToBabelAst(node, false)),
   );
 }
 
 function createCodeElement(
   tagName: string,
   attributes: Attribute[],
-  childNodes: ChildNode[]
+  childNodes: ChildNode[],
 ) {
   const innerText = childNodes
     .filter(isTextNode)
@@ -158,7 +158,7 @@ function createCodeElement(
   const content = hasContent
     ? [
         jsxExpressionContainer(
-          templateLiteral([templateElement({ raw: innerText })], [])
+          templateLiteral([templateElement({ raw: innerText })], []),
         ),
       ]
     : [];
@@ -167,10 +167,10 @@ function createCodeElement(
     jsxOpeningElement(
       jsxIdentifier(tagName),
       convertAttributes(attributes),
-      !hasContent
+      !hasContent,
     ),
     hasContent ? jsxClosingElement(jsxIdentifier(tagName)) : null,
-    content
+    content,
   );
 }
 
@@ -182,7 +182,7 @@ function createCodeElement(
  */
 function createMergeTagComment<T extends Parameters<typeof addComment>[0]>(
   node: T,
-  value: string
+  value: string,
 ) {
   return addComment(node, "inner", `$merge: ${value}`, false);
 }
@@ -192,8 +192,8 @@ function mapTextPartsToJSX(parts: TextPart[]) {
     part.type === "string"
       ? jsxText(encodeText(part.value))
       : jsxExpressionContainer(
-          createMergeTagComment(jsxEmptyExpression(), part.value)
-        )
+          createMergeTagComment(jsxEmptyExpression(), part.value),
+        ),
   );
 }
 
@@ -208,8 +208,8 @@ function mapTextPartsToTopLevel(parts: TextPart[]) {
     jsxFragment(
       jsxOpeningFragment(),
       jsxClosingFragment(),
-      mapTextPartsToJSX(parts)
-    )
+      mapTextPartsToJSX(parts),
+    ),
   );
 }
 

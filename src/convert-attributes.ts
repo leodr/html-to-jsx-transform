@@ -37,7 +37,7 @@ export function convertAttributes(attributes: Attribute[]) {
     if (attributeName === "style") {
       return createJSXAttribute(
         "style",
-        convertStyleToObjectExpression(attributeValue)
+        convertStyleToObjectExpression(attributeValue),
       );
     }
 
@@ -64,7 +64,7 @@ export function convertAttributes(attributes: Attribute[]) {
         return booleanizeAttribute(
           jsxAttribute,
           attributeValue,
-          new Set(["checked", "disabled", "selected", "value"])
+          new Set(["checked", "disabled", "selected", "value"]),
         );
       }
     }
@@ -122,8 +122,8 @@ function convertStyleToObjectExpression(style: string) {
         identifier(camelize(name)),
         pxValueMatch !== null && canStripPx
           ? numericLiteral(Number(pxValueMatch[1]))
-          : stringLiteral(value)
-      )
+          : stringLiteral(value),
+      ),
     );
   });
 
@@ -133,7 +133,7 @@ function convertStyleToObjectExpression(style: string) {
 const CAMELIZE = /[\-\:]([a-z])/g;
 const capitalize = (token: string) => token[1]!.toUpperCase();
 
-const IS_CSS_VARIBLE = /^--\w+/
+const IS_CSS_VARIBLE = /^--\w+/;
 
 /**
  * Converts kebab-case or colon:case to camelCase
@@ -141,8 +141,7 @@ const IS_CSS_VARIBLE = /^--\w+/
 function camelize(string: string) {
   // Skip the attribute if it is a css variable.
   // It looks something like this: style="--bgColor: red"
-  if (IS_CSS_VARIBLE.test(string))
-    return `"${string}"`
+  if (IS_CSS_VARIBLE.test(string)) return `"${string}"`;
   return string.replace(CAMELIZE, capitalize);
 }
 
@@ -154,7 +153,7 @@ function camelize(string: string) {
 function booleanizeAttribute(
   name: string,
   value: string,
-  trueLiterals?: Set<string>
+  trueLiterals?: Set<string>,
 ) {
   if (value === "" || value === "true" || value === name.toLowerCase()) {
     if (trueLiterals?.has(name)) {
@@ -187,33 +186,33 @@ function functionizeAttribute(attributeName: string, attributeValue: string) {
       attributeName,
       arrowFunctionExpression(
         [identifier("event")],
-        blockStatement(innerCode.program.body)
-      )
+        blockStatement(innerCode.program.body),
+      ),
     );
   } catch {
     const codeTemplateLiteral = expressionStatement(
-      templateLiteral([templateElement({ raw: attributeValue })], [])
+      templateLiteral([templateElement({ raw: attributeValue })], []),
     );
     addComment(
       codeTemplateLiteral,
       "leading",
       " TODO: Fix event handler code",
-      true
+      true,
     );
 
     return createJSXAttribute(
       attributeName,
       arrowFunctionExpression(
         [identifier("event")],
-        blockStatement([codeTemplateLiteral])
-      )
+        blockStatement([codeTemplateLiteral]),
+      ),
     );
   }
 }
 
 function createJSXAttribute(
   name: string,
-  value: string | number | Expression | null
+  value: string | number | Expression | null,
 ) {
   if (value === null) {
     return jsxAttribute(jsxIdentifier(name), null);
@@ -225,7 +224,7 @@ function createJSXAttribute(
     case "number":
       return jsxAttribute(
         jsxIdentifier(name),
-        jsxExpressionContainer(numericLiteral(value))
+        jsxExpressionContainer(numericLiteral(value)),
       );
     default:
       return jsxAttribute(jsxIdentifier(name), jsxExpressionContainer(value));
