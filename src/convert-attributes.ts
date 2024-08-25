@@ -133,10 +133,16 @@ function convertStyleToObjectExpression(style: string) {
 const CAMELIZE = /[\-\:]([a-z])/g;
 const capitalize = (token: string) => token[1]!.toUpperCase();
 
+const IS_CSS_VARIBLE = /^--\w+/
+
 /**
  * Converts kebab-case or colon:case to camelCase
  */
 function camelize(string: string) {
+  // Skip the attribute if it is a css variable.
+  // It looks something like this: style="--bgColor: red"
+  if (IS_CSS_VARIBLE.test(string))
+    return `"${string}"`
   return string.replace(CAMELIZE, capitalize);
 }
 
