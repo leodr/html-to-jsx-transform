@@ -155,6 +155,10 @@ function booleanizeAttribute(
   value: string,
   trueLiterals?: Set<string>,
 ) {
+  if (name === "value" && value === "") {
+    return createJSXAttribute(name, value);
+  }
+  
   if (value === "" || value === "true" || value === name.toLowerCase()) {
     if (trueLiterals?.has(name)) {
       return createJSXAttribute(name, booleanLiteral(true));

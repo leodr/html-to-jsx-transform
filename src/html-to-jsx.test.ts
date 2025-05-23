@@ -472,3 +472,8 @@ test("Css varibles should not be processed", () => {
     '<div className="container" style={{ width: 12, height: 30, "--bg-color": "red" }} />',
   );
 });
+
+test("Does not convert empty value attribute to boolean", () => {
+  const htmlToConvert = html`<input value="" />`;
+  expect(htmlToJsx(htmlToConvert)).toEqual(`<input value="" />`);
+});
