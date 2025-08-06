@@ -1,38 +1,38 @@
-import generate from "@babel/generator";
-import {
+import g from "@babel/generator";
+import type {
+  ExpressionStatement,
+  JSXElement,
+  JSXExpressionContainer,
+  JSXText,
+} from "@babel/types";
+import t from "@babel/types";
+import { encode } from "html-entities";
+import type { DefaultTreeAdapterTypes, Token } from "parse5";
+import { parseFragment } from "parse5";
+import { convertAttributes } from "./convert-attributes.ts";
+import { splitMergeTags, type TextPart } from "./split-merge-tags.ts";
+
+const {
   addComment,
   blockStatement,
   expressionStatement,
-  ExpressionStatement,
   jsxClosingElement,
   jsxClosingFragment,
   jsxElement,
-  JSXElement,
   jsxEmptyExpression,
   jsxExpressionContainer,
-  JSXExpressionContainer,
   jsxFragment,
   jsxIdentifier,
   jsxOpeningElement,
   jsxOpeningFragment,
   jsxText,
-  JSXText,
   program,
   stringLiteral,
   templateElement,
   templateLiteral,
-} from "@babel/types";
-import { parseFragment } from "parse5";
-import type { Attribute } from "parse5/dist/common/token";
-import type {
-  ChildNode,
-  CommentNode,
-  DocumentType,
-  TextNode,
-} from "parse5/dist/tree-adapters/default";
-import { encode } from "html-entities";
-import { convertAttributes } from "./convert-attributes";
-import { splitMergeTags, TextPart } from "./split-merge-tags";
+} = t;
+
+const { generate } = g;
 
 export function htmlToJsx(html: string): string {
   const htmlAst = parseFragment(html.trim());
@@ -68,12 +68,18 @@ export function htmlToJsx(html: string): string {
   return babelCode;
 }
 
-function htmlToBabelAst(node: ChildNode, isTopLevel: true): ExpressionStatement;
 function htmlToBabelAst(
-  node: ChildNode,
+  node: DefaultTreeAdapterTypes.ChildNode,
+  isTopLevel: true,
+): ExpressionStatement;
+function htmlToBabelAst(
+  node: DefaultTreeAdapterTypes.ChildNode,
   isTopLevel: false,
 ): (JSXExpressionContainer | JSXText | JSXElement)[];
-function htmlToBabelAst(node: ChildNode, isTopLevel: boolean) {
+function htmlToBabelAst(
+  node: DefaultTreeAdapterTypes.ChildNode,
+  isTopLevel: boolean,
+) {
   if (isTopLevel) {
     if (isCommentNode(node)) {
       const block = blockStatement([]);
@@ -127,8 +133,8 @@ function encodeText(text: string) {
 
 function createJSXElement(
   tagName: string,
-  attributes: Attribute[],
-  childNodes: ChildNode[],
+  attributes: Token.Attribute[],
+  childNodes: DefaultTreeAdapterTypes.ChildNode[],
 ) {
   const hasChildNodes = childNodes.length > 0;
 
@@ -145,8 +151,8 @@ function createJSXElement(
 
 function createCodeElement(
   tagName: string,
-  attributes: Attribute[],
-  childNodes: ChildNode[],
+  attributes: Token.Attribute[],
+  childNodes: DefaultTreeAdapterTypes.ChildNode[],
 ) {
   const innerText = childNodes
     .filter(isTextNode)
@@ -213,15 +219,21 @@ function mapTextPartsToTopLevel(parts: TextPart[]) {
   );
 }
 
-function isCommentNode(node: ChildNode): node is CommentNode {
+function isCommentNode(
+  node: DefaultTreeAdapterTypes.ChildNode,
+): node is DefaultTreeAdapterTypes.CommentNode {
   return node.nodeName === "#comment";
 }
 
-function isTextNode(node: ChildNode): node is TextNode {
+function isTextNode(
+  node: DefaultTreeAdapterTypes.ChildNode,
+): node is DefaultTreeAdapterTypes.TextNode {
   return node.nodeName === "#text";
 }
 
-function isDocumentType(node: ChildNode): node is DocumentType {
+function isDocumentType(
+  node: DefaultTreeAdapterTypes.ChildNode,
+): node is DefaultTreeAdapterTypes.DocumentType {
   return (
     node.nodeName === "#document" || node.nodeName === "#document-fragment"
   );

@@ -1,23 +1,6 @@
 import { parse as parseJS } from "@babel/parser";
-import {
-  addComment,
-  arrowFunctionExpression,
-  blockStatement,
-  booleanLiteral,
-  Expression,
-  expressionStatement,
-  identifier,
-  jsxAttribute,
-  jsxExpressionContainer,
-  jsxIdentifier,
-  numericLiteral,
-  objectExpression,
-  ObjectProperty,
-  objectProperty,
-  stringLiteral,
-  templateElement,
-  templateLiteral,
-} from "@babel/types";
+import type { Expression, ObjectProperty } from "@babel/types";
+import t from "@babel/types";
 import parseStyleString from "style-to-object";
 import {
   coerceToBooleanAttributes,
@@ -28,11 +11,29 @@ import {
   styleDontStripPx,
   svgCamelizedAttributes,
   svgCoerceToBooleanAttributes,
-} from "./attributes";
+} from "./attributes.ts";
 
-import type { Attribute } from "parse5/dist/common/token";
+const {
+  addComment,
+  arrowFunctionExpression,
+  blockStatement,
+  booleanLiteral,
+  expressionStatement,
+  identifier,
+  jsxAttribute,
+  jsxExpressionContainer,
+  jsxIdentifier,
+  numericLiteral,
+  objectExpression,
+  objectProperty,
+  stringLiteral,
+  templateElement,
+  templateLiteral,
+} = t;
 
-export function convertAttributes(attributes: Attribute[]) {
+import type { Token } from "parse5";
+
+export function convertAttributes(attributes: Token.Attribute[]) {
   return attributes.map(({ name: attributeName, value: attributeValue }) => {
     if (attributeName === "style") {
       return createJSXAttribute(
@@ -158,7 +159,7 @@ function booleanizeAttribute(
   if (name === "value" && value === "") {
     return createJSXAttribute(name, value);
   }
-  
+
   if (value === "" || value === "true" || value === name.toLowerCase()) {
     if (trueLiterals?.has(name)) {
       return createJSXAttribute(name, booleanLiteral(true));

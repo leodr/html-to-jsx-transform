@@ -1,1 +1,1 @@
-export { htmlToJsx } from "./html-to-jsx";
+export { htmlToJsx } from "./html-to-jsx.ts";

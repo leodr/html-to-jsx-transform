@@ -1,4 +1,6 @@
-import { htmlToJsx } from "./html-to-jsx";
+import assert from "node:assert";
+import { test } from "node:test";
+import { htmlToJsx } from "./html-to-jsx.ts";
 
 /** Template literal for auto formatting */
 function html(
@@ -20,7 +22,7 @@ test("works for regular HTML", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe("<h1>Hello World!</h1>");
+  assert.equal(convertedJSX, "<h1>Hello World!</h1>");
 });
 
 test("works with comments", () => {
@@ -33,10 +35,13 @@ test("works with comments", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<h1>
+  assert.equal(
+    convertedJSX,
+    `<h1>
       { /* This is a comment. */ }
       Hello World!
-    </h1>`);
+    </h1>`,
+  );
 });
 
 test("works with only text", () => {
@@ -44,7 +49,7 @@ test("works with only text", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`"Hello World!"`);
+  assert.equal(convertedJSX, `"Hello World!"`);
 });
 
 test("works with only comment", () => {
@@ -52,7 +57,7 @@ test("works with only comment", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`{ /* Hello World! */ }`);
+  assert.equal(convertedJSX, `{ /* Hello World! */ }`);
 });
 
 test("works with singular elements", () => {
@@ -60,7 +65,7 @@ test("works with singular elements", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<h1>Hello<br />World!</h1>`);
+  assert.equal(convertedJSX, `<h1>Hello<br />World!</h1>`);
 });
 
 test("self-closes empty elements", () => {
@@ -68,7 +73,7 @@ test("self-closes empty elements", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<div />`);
+  assert.equal(convertedJSX, `<div />`);
 });
 
 test("converts class to className", () => {
@@ -76,7 +81,7 @@ test("converts class to className", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<h1 className="heading-1">Hello World!</h1>`);
+  assert.equal(convertedJSX, `<h1 className="heading-1">Hello World!</h1>`);
 });
 
 test("converts for to htmlFor", () => {
@@ -84,7 +89,7 @@ test("converts for to htmlFor", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<h1 htmlFor="heading-1">Hello World!</h1>`);
+  assert.equal(convertedJSX, `<h1 htmlFor="heading-1">Hello World!</h1>`);
 });
 
 test("converts style tag including px values to numbers", () => {
@@ -94,10 +99,12 @@ test("converts style tag including px values to numbers", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX)
-    .toBe(`<h1 style={{ padding: 10, backgroundColor: "red" }}>
+  assert.equal(
+    convertedJSX,
+    `<h1 style={{ padding: 10, backgroundColor: "red" }}>
     Hello World!
-  </h1>`);
+  </h1>`,
+  );
 });
 
 test("px values are not converted for specified CSS attributes", () => {
@@ -105,7 +112,8 @@ test("px values are not converted for specified CSS attributes", () => {
     Hello World!
   </h1>`;
   const convertedJSX = htmlToJsx(htmlToConvert);
-  expect(convertedJSX).toBe(
+  assert.equal(
+    convertedJSX,
     `<h1 style={{ lineHeight: "14px", fontSize: 16 }}>
     Hello World!
   </h1>`,
@@ -121,9 +129,12 @@ test("works with adjacent elements", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<><h1>Hello</h1>
+  assert.equal(
+    convertedJSX,
+    `<><h1>Hello</h1>
     My
-    <h2>World!</h2></>`);
+    <h2>World!</h2></>`,
+  );
 });
 
 test("converts tabindex to number", () => {
@@ -131,7 +142,7 @@ test("converts tabindex to number", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<h1 tabIndex={0}>Hello World!</h1>`);
+  assert.equal(convertedJSX, `<h1 tabIndex={0}>Hello World!</h1>`);
 });
 
 test("converts contenteditable to boolean", () => {
@@ -139,7 +150,7 @@ test("converts contenteditable to boolean", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<h1 contentEditable>Hello World!</h1>`);
+  assert.equal(convertedJSX, `<h1 contentEditable>Hello World!</h1>`);
 });
 
 test("converts value to boolean but leaves true in", () => {
@@ -147,7 +158,7 @@ test("converts value to boolean but leaves true in", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<h1 value={true}>Hello World!</h1>`);
+  assert.equal(convertedJSX, `<h1 value={true}>Hello World!</h1>`);
 });
 
 test("converts disabled to boolean but leaves true in", () => {
@@ -155,7 +166,7 @@ test("converts disabled to boolean but leaves true in", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<h1 disabled={true}>Hello World!</h1>`);
+  assert.equal(convertedJSX, `<h1 disabled={true}>Hello World!</h1>`);
 });
 
 test("converts playsinline to boolean", () => {
@@ -163,7 +174,7 @@ test("converts playsinline to boolean", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<h1 playsInline>Hello World!</h1>`);
+  assert.equal(convertedJSX, `<h1 playsInline>Hello World!</h1>`);
 });
 
 test("converts checked to boolean but leaves true in", () => {
@@ -171,7 +182,7 @@ test("converts checked to boolean but leaves true in", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<h1 checked={true}>Hello World!</h1>`);
+  assert.equal(convertedJSX, `<h1 checked={true}>Hello World!</h1>`);
 });
 
 test("converts cols to number", () => {
@@ -179,7 +190,7 @@ test("converts cols to number", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<h1 cols={12}>Hello World!</h1>`);
+  assert.equal(convertedJSX, `<h1 cols={12}>Hello World!</h1>`);
 });
 
 test("converts svg attributes", () => {
@@ -200,10 +211,12 @@ test("converts svg attributes", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX)
-    .toBe(`<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+  assert.equal(
+    convertedJSX,
+    `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
     <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
-  </svg>`);
+  </svg>`,
+  );
 });
 
 test("handles onclick and converts function", () => {
@@ -213,7 +226,8 @@ test("handles onclick and converts function", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(
+  assert.equal(
+    convertedJSX,
     `<button onClick={handleButtonClick}>
     Button
   </button>`,
@@ -227,7 +241,8 @@ test("handles onclick with more complex statement", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(
+  assert.equal(
+    convertedJSX,
     `<button onClick={event => { window.scrollY = 0; }}>
     Button
   </button>`,
@@ -241,7 +256,8 @@ test("handles onclick with invalid code inside", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(
+  assert.equal(
+    convertedJSX,
     `<button onClick={event => { // TODO: Fix event handler code
 \`this is invalid code.\`; }}>
     Button
@@ -254,7 +270,7 @@ test("handles lowercased attributes", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<menu contextMenu="share" />`);
+  assert.equal(convertedJSX, `<menu contextMenu="share" />`);
 });
 
 test("handles two adjacent comments", () => {
@@ -262,7 +278,7 @@ test("handles two adjacent comments", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<>{ /* Hello */ }{ /* World! */ }</>`);
+  assert.equal(convertedJSX, `<>{ /* Hello */ }{ /* World! */ }</>`);
 });
 
 test("adds template literals to the inside of style elements", () => {
@@ -274,11 +290,14 @@ test("adds template literals to the inside of style elements", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<style>{\`
+  assert.equal(
+    convertedJSX,
+    `<style>{\`
     body {
       background: red;
     }
-  \`}</style>`);
+  \`}</style>`,
+  );
 });
 
 test("handles inner script elements", () => {
@@ -290,11 +309,14 @@ test("handles inner script elements", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<div>
+  assert.equal(
+    convertedJSX,
+    `<div>
     <script>{\`
       console.log("Hello World!");
     \`}</script>
-  </div>`);
+  </div>`,
+  );
 });
 
 test("number attributes that are not a number remain untouched", () => {
@@ -302,7 +324,7 @@ test("number attributes that are not a number remain untouched", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<h1 tabIndex="wronginput">Hello World!</h1>`);
+  assert.equal(convertedJSX, `<h1 tabIndex="wronginput">Hello World!</h1>`);
 });
 
 test("svg boolean attributes get converted", () => {
@@ -310,7 +332,7 @@ test("svg boolean attributes get converted", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<path focusable />`);
+  assert.equal(convertedJSX, `<path focusable />`);
 });
 
 test("false boolean attributes get converted to boolean expression", () => {
@@ -318,7 +340,7 @@ test("false boolean attributes get converted to boolean expression", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<input checked={false} />`);
+  assert.equal(convertedJSX, `<input checked={false} />`);
 });
 
 test("border attributes are converted to numbers", () => {
@@ -326,7 +348,7 @@ test("border attributes are converted to numbers", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`<table border={0} />`);
+  assert.equal(convertedJSX, `<table border={0} />`);
 });
 
 test("boolean attributes with non-boolean values are left untouched", () => {
@@ -336,7 +358,8 @@ test("boolean attributes with non-boolean values are left untouched", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(
+  assert.equal(
+    convertedJSX,
     `<a href="example.com" download="installer.exe">Download</a>`,
   );
 });
@@ -352,7 +375,8 @@ test("adjacent script elements work", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(
+  assert.equal(
+    convertedJSX,
     `<><script>{\`
       window.Example_Config = window.Example_Config || [];
       window.Example_Config.push({ key: "XXXXXXXX" });
@@ -373,7 +397,8 @@ test("label and input works", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(
+  assert.equal(
+    convertedJSX,
     `<>{ /* Hello world */ }
     <div className="awesome" style={{ border: "1px solid red" }}>
       <label htmlFor="name">Enter your name: </label>
@@ -401,7 +426,8 @@ test("Tailwind CSS sample works", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(
+  assert.equal(
+    convertedJSX,
     `<button className="max-w-xs bg-gray-800 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" id="user-menu" aria-haspopup="true">
       <span className="sr-only">Open user menu</span>
       <img className="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" />
@@ -422,7 +448,8 @@ test("Example with merge tags", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(
+  assert.equal(
+    convertedJSX,
     `<>{ /*$merge: {% if email %}*/ }
     <button className="max-w-8">
       <span>Send Email</span>
@@ -438,7 +465,7 @@ test("Merge tag at top-level", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(`{ /*$merge: {{ email | to_lower() }}*/ }`);
+  assert.equal(convertedJSX, `{ /*$merge: {{ email | to_lower() }}*/ }`);
 });
 
 test("HTML entities are preserved in JSX text", () => {
@@ -448,17 +475,20 @@ test("HTML entities are preserved in JSX text", () => {
 
   const convertedJSX = htmlToJsx(htmlToConvert);
 
-  expect(convertedJSX).toBe(
+  assert.equal(
+    convertedJSX,
     `<span>This has&nbsp;a non-breaking space and a &lt; symbol</span>`,
   );
 });
 
 test("HTML entities are not created in string literals or template literals", () => {
-  expect(htmlToJsx(`some&nbsp;text`)).toEqual(`"some\\xA0text"`);
-  expect(htmlToJsx(`your email is "{{ email ++ "\xA0" }}"`)).toEqual(
+  assert.equal(htmlToJsx(`some&nbsp;text`), `"some\\xA0text"`);
+  assert.equal(
+    htmlToJsx(`your email is "{{ email ++ "\xA0" }}"`),
     `<>your email is &quot;{ /*$merge: {{ email ++ "\xA0" }}*/ }&quot;</>`,
   );
-  expect(htmlToJsx(`<style>background-color: blue;</style>`)).toEqual(
+  assert.equal(
+    htmlToJsx(`<style>background-color: blue;</style>`),
     `<style>{\`background-color: blue;\`}</style>`,
   );
 });
@@ -468,12 +498,13 @@ test("Css varibles should not be processed", () => {
     class="container"
     style="width: 12px; height: 30px; --bg-color: red;"
   />`;
-  expect(htmlToJsx(htmlToConvert)).toEqual(
+  assert.equal(
+    htmlToJsx(htmlToConvert),
     '<div className="container" style={{ width: 12, height: 30, "--bg-color": "red" }} />',
   );
 });
 
 test("Does not convert empty value attribute to boolean", () => {
   const htmlToConvert = html`<input value="" />`;
-  expect(htmlToJsx(htmlToConvert)).toEqual(`<input value="" />`);
+  assert.equal(htmlToJsx(htmlToConvert), `<input value="" />`);
 });

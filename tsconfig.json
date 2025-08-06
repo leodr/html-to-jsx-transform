@@ -4,13 +4,12 @@
   "compilerOptions": {
     "outDir": "dist",
     "lib": ["es2022"],
-    "module": "commonjs",
+    "module": "NodeNext",
     "target": "es2022",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
     "exactOptionalPropertyTypes": true,
@@ -20,6 +19,8 @@
     "noPropertyAccessFromIndexSignature": true,
     "noUncheckedIndexedAccess": true,
     "noUnusedParameters": true,
-    "declaration": true
+    "declaration": true,
+    "allowImportingTsExtensions": true,
+    "emitDeclarationOnly": true
   }
 }

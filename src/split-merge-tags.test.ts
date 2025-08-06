@@ -1,7 +1,9 @@
-import { splitMergeTags } from "./split-merge-tags";
+import assert from "node:assert";
+import { test } from "node:test";
+import { splitMergeTags } from "./split-merge-tags.ts";
 
 test("splitMergeTags returns a single part for a string containing no merge tags", () => {
-  expect(splitMergeTags("This is some text")).toEqual([
+  assert.deepEqual(splitMergeTags("This is some text"), [
     {
       type: "string",
       value: "This is some text",
@@ -10,11 +12,11 @@ test("splitMergeTags returns a single part for a string containing no merge tags
 });
 
 test("splitMergeTags handles an empty string", () => {
-  expect(splitMergeTags("")).toEqual([]);
+  assert.deepEqual(splitMergeTags(""), []);
 });
 
 test("splitMergeTags handles merge tags aligned to boundaries", () => {
-  expect(splitMergeTags("{% something here%}")).toEqual([
+  assert.deepEqual(splitMergeTags("{% something here%}"), [
     {
       type: "merge",
       value: "{% something here%}",
@@ -23,7 +25,7 @@ test("splitMergeTags handles merge tags aligned to boundaries", () => {
 });
 
 test("splitMergeTags handles merge tags not at boundaries", () => {
-  expect(splitMergeTags("some text {% email %} around a merge tag")).toEqual([
+  assert.deepEqual(splitMergeTags("some text {% email %} around a merge tag"), [
     { type: "string", value: "some text " },
     { type: "merge", value: "{% email %}" },
     { type: "string", value: " around a merge tag" },
@@ -31,49 +33,52 @@ test("splitMergeTags handles merge tags not at boundaries", () => {
 });
 
 test("splitMergeTags handles merge tags at one boundary", () => {
-  expect(splitMergeTags("{% email %} around a merge tag")).toEqual([
+  assert.deepEqual(splitMergeTags("{% email %} around a merge tag"), [
     { type: "merge", value: "{% email %}" },
     { type: "string", value: " around a merge tag" },
   ]);
-  expect(splitMergeTags("some text {% email %}")).toEqual([
+  assert.deepEqual(splitMergeTags("some text {% email %}"), [
     { type: "string", value: "some text " },
     { type: "merge", value: "{% email %}" },
   ]);
 });
 
 test("splitMergeTags handles multiple merge tags in a string", () => {
-  expect(
+  assert.deepEqual(
     splitMergeTags("this is my { email } and this is my {{phoneNumber }}"),
-  ).toEqual([
-    { type: "string", value: "this is my " },
-    { type: "merge", value: "{ email }" },
-    { type: "string", value: " and this is my " },
-    { type: "merge", value: "{{phoneNumber }}" },
-  ]);
+    [
+      { type: "string", value: "this is my " },
+      { type: "merge", value: "{ email }" },
+      { type: "string", value: " and this is my " },
+      { type: "merge", value: "{{phoneNumber }}" },
+    ],
+  );
 });
 
 test("splitMergeTags handles escaped merge tag characters", () => {
-  expect(
+  assert.deepEqual(
     splitMergeTags(
       "this is my { '\\{' + email } and this is my {{phoneNumber }}",
     ),
-  ).toEqual([
-    { type: "string", value: "this is my " },
-    { type: "merge", value: "{ '\\{' + email }" },
-    { type: "string", value: " and this is my " },
-    { type: "merge", value: "{{phoneNumber }}" },
-  ]);
+    [
+      { type: "string", value: "this is my " },
+      { type: "merge", value: "{ '\\{' + email }" },
+      { type: "string", value: " and this is my " },
+      { type: "merge", value: "{{phoneNumber }}" },
+    ],
+  );
 });
 
 test("splitMergeTags handles escaped merge tag characters", () => {
-  expect(
+  assert.deepEqual(
     splitMergeTags(
       "this is my { '\\{' + email } and this is my {{phoneNumber }}",
     ),
-  ).toEqual([
-    { type: "string", value: "this is my " },
-    { type: "merge", value: "{ '\\{' + email }" },
-    { type: "string", value: " and this is my " },
-    { type: "merge", value: "{{phoneNumber }}" },
-  ]);
+    [
+      { type: "string", value: "this is my " },
+      { type: "merge", value: "{ '\\{' + email }" },
+      { type: "string", value: " and this is my " },
+      { type: "merge", value: "{{phoneNumber }}" },
+    ],
+  );
 });
