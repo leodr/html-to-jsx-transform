@@ -1,38 +1,16 @@
-import g from "@babel/generator";
+import { generate } from "@babel/generator";
 import type {
   ExpressionStatement,
   JSXElement,
   JSXExpressionContainer,
   JSXText,
 } from "@babel/types";
-import t from "@babel/types";
+import bt from "@babel/types";
 import { encode } from "html-entities";
-import type { DefaultTreeAdapterTypes, Token } from "parse5";
+import type { DefaultTreeAdapterTypes as pt, Token } from "parse5";
 import { parseFragment } from "parse5";
 import { convertAttributes } from "./convert-attributes.ts";
 import { splitMergeTags, type TextPart } from "./split-merge-tags.ts";
-
-const {
-  addComment,
-  blockStatement,
-  expressionStatement,
-  jsxClosingElement,
-  jsxClosingFragment,
-  jsxElement,
-  jsxEmptyExpression,
-  jsxExpressionContainer,
-  jsxFragment,
-  jsxIdentifier,
-  jsxOpeningElement,
-  jsxOpeningFragment,
-  jsxText,
-  program,
-  stringLiteral,
-  templateElement,
-  templateLiteral,
-} = t;
-
-const { generate } = g;
 
 export function htmlToJsx(html: string): string {
   const htmlAst = parseFragment(html.trim());
@@ -41,10 +19,10 @@ export function htmlToJsx(html: string): string {
   if (htmlAst.childNodes.length === 1) {
     babelAst = htmlToBabelAst(htmlAst.childNodes[0]!, true);
   } else {
-    babelAst = expressionStatement(
-      jsxFragment(
-        jsxOpeningFragment(),
-        jsxClosingFragment(),
+    babelAst = bt.expressionStatement(
+      bt.jsxFragment(
+        bt.jsxOpeningFragment(),
+        bt.jsxClosingFragment(),
         htmlAst.childNodes.flatMap((childNode) =>
           htmlToBabelAst(childNode, false),
         ),
@@ -52,7 +30,7 @@ export function htmlToJsx(html: string): string {
     );
   }
 
-  const babelOutput = generate(program([babelAst]), { concise: true });
+  const babelOutput = generate(bt.program([babelAst]), { concise: true });
 
   let babelCode = babelOutput.code.trim();
 
@@ -69,21 +47,18 @@ export function htmlToJsx(html: string): string {
 }
 
 function htmlToBabelAst(
-  node: DefaultTreeAdapterTypes.ChildNode,
+  node: pt.ChildNode,
   isTopLevel: true,
 ): ExpressionStatement;
 function htmlToBabelAst(
-  node: DefaultTreeAdapterTypes.ChildNode,
+  node: pt.ChildNode,
   isTopLevel: false,
 ): (JSXExpressionContainer | JSXText | JSXElement)[];
-function htmlToBabelAst(
-  node: DefaultTreeAdapterTypes.ChildNode,
-  isTopLevel: boolean,
-) {
+function htmlToBabelAst(node: pt.ChildNode, isTopLevel: boolean) {
   if (isTopLevel) {
     if (isCommentNode(node)) {
-      const block = blockStatement([]);
-      addComment(block, "inner", node.data, false);
+      const block = bt.blockStatement([]);
+      bt.addComment(block, "inner", node.data, false);
 
       return block;
     } else if (isTextNode(node)) {
@@ -93,21 +68,21 @@ function htmlToBabelAst(
       throw Error("Document type nodes cannot be processed by this function.");
     } else {
       if (node.nodeName === "style" || node.nodeName === "script") {
-        return expressionStatement(
+        return bt.expressionStatement(
           createCodeElement(node.nodeName, node.attrs, node.childNodes),
         );
       }
 
-      return expressionStatement(
+      return bt.expressionStatement(
         createJSXElement(node.nodeName, node.attrs, node.childNodes),
       );
     }
   } else {
     if (isCommentNode(node)) {
-      const emptyExpression = jsxEmptyExpression();
-      addComment(emptyExpression, "inner", node.data, false);
+      const emptyExpression = bt.jsxEmptyExpression();
+      bt.addComment(emptyExpression, "inner", node.data, false);
 
-      return [jsxExpressionContainer(emptyExpression)] as (
+      return [bt.jsxExpressionContainer(emptyExpression)] as (
         | JSXExpressionContainer
         | JSXText
         | JSXElement
@@ -134,17 +109,17 @@ function encodeText(text: string) {
 function createJSXElement(
   tagName: string,
   attributes: Token.Attribute[],
-  childNodes: DefaultTreeAdapterTypes.ChildNode[],
+  childNodes: pt.ChildNode[],
 ) {
   const hasChildNodes = childNodes.length > 0;
 
-  return jsxElement(
-    jsxOpeningElement(
-      jsxIdentifier(tagName),
+  return bt.jsxElement(
+    bt.jsxOpeningElement(
+      bt.jsxIdentifier(tagName),
       convertAttributes(attributes),
       !hasChildNodes,
     ),
-    jsxClosingElement(jsxIdentifier(tagName)),
+    bt.jsxClosingElement(bt.jsxIdentifier(tagName)),
     childNodes.flatMap((node) => htmlToBabelAst(node, false)),
   );
 }
@@ -152,7 +127,7 @@ function createJSXElement(
 function createCodeElement(
   tagName: string,
   attributes: Token.Attribute[],
-  childNodes: DefaultTreeAdapterTypes.ChildNode[],
+  childNodes: pt.ChildNode[],
 ) {
   const innerText = childNodes
     .filter(isTextNode)
@@ -163,19 +138,19 @@ function createCodeElement(
 
   const content = hasContent
     ? [
-        jsxExpressionContainer(
-          templateLiteral([templateElement({ raw: innerText })], []),
+        bt.jsxExpressionContainer(
+          bt.templateLiteral([bt.templateElement({ raw: innerText })], []),
         ),
       ]
     : [];
 
-  return jsxElement(
-    jsxOpeningElement(
-      jsxIdentifier(tagName),
+  return bt.jsxElement(
+    bt.jsxOpeningElement(
+      bt.jsxIdentifier(tagName),
       convertAttributes(attributes),
       !hasContent,
     ),
-    hasContent ? jsxClosingElement(jsxIdentifier(tagName)) : null,
+    hasContent ? bt.jsxClosingElement(bt.jsxIdentifier(tagName)) : null,
     content,
   );
 }
@@ -186,19 +161,19 @@ function createCodeElement(
  * @param value the string to mark up
  * @returns a JSX `<script>` tag containing the specified string
  */
-function createMergeTagComment<T extends Parameters<typeof addComment>[0]>(
+function createMergeTagComment<T extends Parameters<typeof bt.addComment>[0]>(
   node: T,
   value: string,
 ) {
-  return addComment(node, "inner", `$merge: ${value}`, false);
+  return bt.addComment(node, "inner", `$merge: ${value}`, false);
 }
 
 function mapTextPartsToJSX(parts: TextPart[]) {
   return parts.map((part) =>
     part.type === "string"
-      ? jsxText(encodeText(part.value))
-      : jsxExpressionContainer(
-          createMergeTagComment(jsxEmptyExpression(), part.value),
+      ? bt.jsxText(encodeText(part.value))
+      : bt.jsxExpressionContainer(
+          createMergeTagComment(bt.jsxEmptyExpression(), part.value),
         ),
   );
 }
@@ -207,33 +182,27 @@ function mapTextPartsToTopLevel(parts: TextPart[]) {
   // If its a single part, use a string literal or direct script tag instead
   if (parts.length === 1 && parts[0])
     return parts[0]?.type === "string"
-      ? expressionStatement(stringLiteral(parts[0].value))
-      : createMergeTagComment(blockStatement([]), parts[0].value);
+      ? bt.expressionStatement(bt.stringLiteral(parts[0].value))
+      : createMergeTagComment(bt.blockStatement([]), parts[0].value);
 
-  return expressionStatement(
-    jsxFragment(
-      jsxOpeningFragment(),
-      jsxClosingFragment(),
+  return bt.expressionStatement(
+    bt.jsxFragment(
+      bt.jsxOpeningFragment(),
+      bt.jsxClosingFragment(),
       mapTextPartsToJSX(parts),
     ),
   );
 }
 
-function isCommentNode(
-  node: DefaultTreeAdapterTypes.ChildNode,
-): node is DefaultTreeAdapterTypes.CommentNode {
+function isCommentNode(node: pt.ChildNode): node is pt.CommentNode {
   return node.nodeName === "#comment";
 }
 
-function isTextNode(
-  node: DefaultTreeAdapterTypes.ChildNode,
-): node is DefaultTreeAdapterTypes.TextNode {
+function isTextNode(node: pt.ChildNode): node is pt.TextNode {
   return node.nodeName === "#text";
 }
 
-function isDocumentType(
-  node: DefaultTreeAdapterTypes.ChildNode,
-): node is DefaultTreeAdapterTypes.DocumentType {
+function isDocumentType(node: pt.ChildNode): node is pt.DocumentType {
   return (
     node.nodeName === "#document" || node.nodeName === "#document-fragment"
   );

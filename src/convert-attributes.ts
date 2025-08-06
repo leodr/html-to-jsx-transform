@@ -1,6 +1,7 @@
 import { parse as parseJS } from "@babel/parser";
 import type { Expression, ObjectProperty } from "@babel/types";
 import t from "@babel/types";
+import type { Token } from "parse5";
 import parseStyleString from "style-to-object";
 import {
   coerceToBooleanAttributes,
@@ -12,26 +13,6 @@ import {
   svgCamelizedAttributes,
   svgCoerceToBooleanAttributes,
 } from "./attributes.ts";
-
-const {
-  addComment,
-  arrowFunctionExpression,
-  blockStatement,
-  booleanLiteral,
-  expressionStatement,
-  identifier,
-  jsxAttribute,
-  jsxExpressionContainer,
-  jsxIdentifier,
-  numericLiteral,
-  objectExpression,
-  objectProperty,
-  stringLiteral,
-  templateElement,
-  templateLiteral,
-} = t;
-
-import type { Token } from "parse5";
 
 export function convertAttributes(attributes: Token.Attribute[]) {
   return attributes.map(({ name: attributeName, value: attributeValue }) => {
@@ -119,16 +100,16 @@ function convertStyleToObjectExpression(style: string) {
     const canStripPx = !styleDontStripPx.includes(name.toLowerCase());
     const pxValueMatch = value.match(MATCH_PX_VALUE);
     properties.push(
-      objectProperty(
-        identifier(camelize(name)),
+      t.objectProperty(
+        t.identifier(camelize(name)),
         pxValueMatch !== null && canStripPx
-          ? numericLiteral(Number(pxValueMatch[1]))
-          : stringLiteral(value),
+          ? t.numericLiteral(Number(pxValueMatch[1]))
+          : t.stringLiteral(value),
       ),
     );
   });
 
-  return objectExpression(properties);
+  return t.objectExpression(properties);
 }
 
 const CAMELIZE = /[\-\:]([a-z])/g;
@@ -162,12 +143,12 @@ function booleanizeAttribute(
 
   if (value === "" || value === "true" || value === name.toLowerCase()) {
     if (trueLiterals?.has(name)) {
-      return createJSXAttribute(name, booleanLiteral(true));
+      return createJSXAttribute(name, t.booleanLiteral(true));
     }
 
     return createJSXAttribute(name, null);
   } else if (value === "false") {
-    return createJSXAttribute(name, booleanLiteral(false));
+    return createJSXAttribute(name, t.booleanLiteral(false));
   }
 
   return createJSXAttribute(name, value);
@@ -181,7 +162,10 @@ function functionizeAttribute(attributeName: string, attributeValue: string) {
   const functionCallMatch = attributeValue.match(EMPTY_FUNCTION_CALL);
 
   if (functionCallMatch !== null) {
-    return createJSXAttribute(attributeName, identifier(functionCallMatch[1]!));
+    return createJSXAttribute(
+      attributeName,
+      t.identifier(functionCallMatch[1]!),
+    );
   }
 
   try {
@@ -189,16 +173,16 @@ function functionizeAttribute(attributeName: string, attributeValue: string) {
 
     return createJSXAttribute(
       attributeName,
-      arrowFunctionExpression(
-        [identifier("event")],
-        blockStatement(innerCode.program.body),
+      t.arrowFunctionExpression(
+        [t.identifier("event")],
+        t.blockStatement(innerCode.program.body),
       ),
     );
   } catch {
-    const codeTemplateLiteral = expressionStatement(
-      templateLiteral([templateElement({ raw: attributeValue })], []),
+    const codeTemplateLiteral = t.expressionStatement(
+      t.templateLiteral([t.templateElement({ raw: attributeValue })], []),
     );
-    addComment(
+    t.addComment(
       codeTemplateLiteral,
       "leading",
       " TODO: Fix event handler code",
@@ -207,9 +191,9 @@ function functionizeAttribute(attributeName: string, attributeValue: string) {
 
     return createJSXAttribute(
       attributeName,
-      arrowFunctionExpression(
-        [identifier("event")],
-        blockStatement([codeTemplateLiteral]),
+      t.arrowFunctionExpression(
+        [t.identifier("event")],
+        t.blockStatement([codeTemplateLiteral]),
       ),
     );
   }
@@ -220,18 +204,21 @@ function createJSXAttribute(
   value: string | number | Expression | null,
 ) {
   if (value === null) {
-    return jsxAttribute(jsxIdentifier(name), null);
+    return t.jsxAttribute(t.jsxIdentifier(name), null);
   }
 
   switch (typeof value) {
     case "string":
-      return jsxAttribute(jsxIdentifier(name), stringLiteral(value));
+      return t.jsxAttribute(t.jsxIdentifier(name), t.stringLiteral(value));
     case "number":
-      return jsxAttribute(
-        jsxIdentifier(name),
-        jsxExpressionContainer(numericLiteral(value)),
+      return t.jsxAttribute(
+        t.jsxIdentifier(name),
+        t.jsxExpressionContainer(t.numericLiteral(value)),
       );
     default:
-      return jsxAttribute(jsxIdentifier(name), jsxExpressionContainer(value));
+      return t.jsxAttribute(
+        t.jsxIdentifier(name),
+        t.jsxExpressionContainer(value),
+      );
   }
 }
